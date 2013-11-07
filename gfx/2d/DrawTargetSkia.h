@@ -104,11 +104,11 @@ public:
   void Init(unsigned char* aData, const IntSize &aSize, int32_t aStride, SurfaceFormat aFormat);
 
 #ifdef USE_SKIA_GPU
-  virtual GenericRefCountedBase* GetGLContext() const MOZ_OVERRIDE { return mGLContext; }
-  void InitWithGLContextAndGrGLInterface(GenericRefCountedBase* aGLContext,
-                                         GrGLInterface* aGrGLInterface,
-                                         const IntSize &aSize,
-                                         SurfaceFormat aFormat) MOZ_OVERRIDE;
+  virtual GenericRefCountedBase* GetSkiaGLGlue() const MOZ_OVERRIDE { return mGlue; }
+  void InitWithGrContext(GenericRefCountedBase* aGlue,
+                         GrContext* aGrContext,
+                         const IntSize &aSize,
+                         SurfaceFormat aFormat) MOZ_OVERRIDE;
 
   void SetCacheLimits(int aCount, int aSizeInBytes);
   void PurgeCaches();
@@ -133,14 +133,7 @@ private:
   SkRect SkRectCoveringWholeSurface() const;
 
 #ifdef USE_SKIA_GPU
-  /*
-   * These members have inter-dependencies, but do not keep each other alive, so
-   * destruction order is very important here: mGrContext uses mGrGLInterface, and
-   * through it, uses mGLContext, so it is important that they be declared in the
-   * present order.
-   */
-  RefPtr<GenericRefCountedBase> mGLContext;
-  SkRefPtr<GrGLInterface> mGrGLInterface;
+  RefPtr<GenericRefCountedBase> mGlue;
   SkRefPtr<GrContext> mGrContext;
 
   static int sTextureCacheCount;

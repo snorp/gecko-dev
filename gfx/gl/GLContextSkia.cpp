@@ -16,9 +16,12 @@
 #endif
 
 #include "GLContext.h"
+#include "GLContextSkia.h"
+#include "SkiaGLGlue.h"
 
 using mozilla::gl::GLContext;
 using mozilla::gl::GLFeature;
+using mozilla::gl::SkiaGLGlue;
 using mozilla::gfx::DrawTarget;
 
 static mozilla::ThreadLocal<GLContext*> sGLContext;
@@ -27,8 +30,8 @@ extern "C" {
 
 void EnsureGLContext(const GrGLInterface* i)
 {
-    const DrawTarget* drawTarget = reinterpret_cast<const DrawTarget*>(i->fCallbackData);
-    GLContext* gl = static_cast<GLContext*>(drawTarget->GetGLContext());
+    const SkiaGLGlue* contextSkia = reinterpret_cast<const SkiaGLGlue*>(i->fCallbackData);
+    GLContext* gl = contextSkia->GetGLContext();
     gl->MakeCurrent();
 
     if (!sGLContext.initialized()) {

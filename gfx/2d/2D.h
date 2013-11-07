@@ -962,15 +962,15 @@ public:
     return mPermitSubpixelAA;
   }
 
-  virtual GenericRefCountedBase* GetGLContext() const {
+  virtual GenericRefCountedBase* GetSkiaGLGlue() const {
     return nullptr;
   }
 
 #ifdef USE_SKIA_GPU
-  virtual void InitWithGLContextAndGrGLInterface(GenericRefCountedBase* aGLContext,
-                                            GrGLInterface* aGrGLInterface,
-                                            const IntSize &aSize,
-                                            SurfaceFormat aFormat)
+  virtual void InitWithGrContext(GenericRefCountedBase* aGlue,
+                                 GrContext* aGrContext,
+                                 const IntSize &aSize,
+                                 SurfaceFormat aFormat)
   {
     MOZ_CRASH();
   }
@@ -1075,10 +1075,10 @@ public:
 
 #ifdef USE_SKIA_GPU
   static TemporaryRef<DrawTarget>
-    CreateDrawTargetSkiaWithGLContextAndGrGLInterface(GenericRefCountedBase* aGLContext,
-                                                      GrGLInterface* aGrGLInterface,
-                                                      const IntSize &aSize,
-                                                      SurfaceFormat aFormat);
+    CreateDrawTargetSkiaWithGrContext(GenericRefCountedBase* aGLContext,
+                                      GrContext* aGrContext,
+                                      const IntSize &aSize,
+                                      SurfaceFormat aFormat);
 
   static void
     SetGlobalSkiaCacheLimits(int aCount, int aSizeInBytes);

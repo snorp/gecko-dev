@@ -97,11 +97,12 @@
 #ifdef USE_SKIA_GPU
 #undef free // apparently defined by some windows header, clashing with a free()
             // method in SkTypes.h
-#include "GLContextSkia.h"
+#include "SkiaGLGlue.h"
 #include "SurfaceTypes.h"
 #include "nsIGfxInfo.h"
 #endif
 using mozilla::gl::GLContext;
+using mozilla::gl::SkiaGLGlue;
 using mozilla::gl::GLContextProvider;
 
 #ifdef XP_WIN
@@ -439,7 +440,7 @@ public:
     if (!context)
       return;
 
-    GLContext* glContext = static_cast<GLContext*>(context->mTarget->GetGLContext());
+    GLContext* glContext = static_cast<SkiaGLGlue*>(context->mTarget->GetSkiaGLGlue())->GetGLContext();
     if (!glContext)
       return;
 
@@ -751,7 +752,7 @@ CanvasRenderingContext2D::RedrawUser(const gfxRect& r)
 void CanvasRenderingContext2D::Demote()
 {
 #ifdef  USE_SKIA_GPU
-  if (!IsTargetValid() || mForceSoftware || !mTarget->GetGLContext())
+  if (!IsTargetValid() || mForceSoftware || !static_cast<SkiaGLGlue*>(mTarget->GetSkiaGLGlue())->GetGLContext())
     return;
 
   RemoveDemotableContext(this);
@@ -882,8 +883,11 @@ CanvasRenderingContext2D::EnsureTarget()
         }
 
         if (glContext) {
-          SkAutoTUnref<GrGLInterface> i(CreateGrGLInterfaceFromGLContext(glContext));
-          mTarget = Factory::CreateDrawTargetSkiaWithGLContextAndGrGLInterface(glContext, i, size, format);
+          SkiaGLGlue* glue = new SkiaGLGlue(glContext);
+          // Unfortunately we need to explicitly pass in the GrContext object here because to Factory (and the rest
+          // of Moz2D), the SkiaGLGlue object is just a GenericRefCounted and so it can't pull in the
+          // GrContext there.
+          mTarget = Factory::CreateDrawTargetSkiaWithGrContext(glue, glue->GetGrContext(), size, format);
           AddDemotableContext(this);
         } else {
           mTarget = layerManager->CreateDrawTarget(size, format);
@@ -4058,7 +4062,7 @@ CanvasRenderingContext2D::GetCanvasLayer(nsDisplayListBuilder* aBuilder,
         aOldLayer->GetUserData(&g2DContextLayerUserData));
 
     CanvasLayer::Data data;
-    data.mGLContext = static_cast<GLContext*>(mTarget->GetGLContext());
+    data.mGLContext = static_cast<GLContext*>(mTarget->GetSkiaGLGlue());
     if (userData && userData->IsForContext(this) && aOldLayer->IsDataValid(data)) {
       nsRefPtr<CanvasLayer> ret = aOldLayer;
       return ret.forget();
@@ -4092,7 +4096,7 @@ CanvasRenderingContext2D::GetCanvasLayer(nsDisplayListBuilder* aBuilder,
 
   CanvasLayer::Data data;
 #ifdef USE_SKIA_GPU
-  GLContext* glContext = static_cast<GLContext*>(mTarget->GetGLContext());
+  GLContext* glContext = static_cast<SkiaGLGlue*>(mTarget->GetSkiaGLGlue())->GetGLContext();
   if (glContext) {
     canvasLayer->SetPreTransactionCallback(
             CanvasRenderingContext2DUserData::PreTransactionCallback, userData);

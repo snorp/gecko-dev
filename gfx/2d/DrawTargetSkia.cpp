@@ -768,21 +768,16 @@ DrawTargetSkia::Init(const IntSize &aSize, SurfaceFormat aFormat)
 
 #ifdef USE_SKIA_GPU
 void
-DrawTargetSkia::InitWithGLContextAndGrGLInterface(GenericRefCountedBase* aGLContext,
-                                                  GrGLInterface* aGrGLInterface,
-                                                  const IntSize &aSize,
-                                                  SurfaceFormat aFormat)
+DrawTargetSkia::InitWithGrContext(GenericRefCountedBase* aGlue,
+                                  GrContext* aGrContext,
+                                  const IntSize &aSize,
+                                  SurfaceFormat aFormat)
 {
-  mGLContext = aGLContext;
+  mGlue = aGlue;
+  mGrContext = aGrContext;
+
   mSize = aSize;
   mFormat = aFormat;
-
-  mGrGLInterface = aGrGLInterface;
-  mGrGLInterface->fCallbackData = reinterpret_cast<GrGLInterfaceCallbackData>(this);
-
-  GrBackendContext backendContext = reinterpret_cast<GrBackendContext>(aGrGLInterface);
-  SkAutoTUnref<GrContext> gr(GrContext::Create(kOpenGL_GrBackend, backendContext));
-  mGrContext = gr.get();
 
   GrBackendRenderTargetDesc targetDescriptor;
 
