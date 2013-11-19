@@ -399,8 +399,7 @@ public:
                             nsIInputStream **aStream) MOZ_OVERRIDE;
   NS_IMETHOD GetThebesSurface(gfxASurface **surface) MOZ_OVERRIDE;
 
-  mozilla::TemporaryRef<mozilla::gfx::SourceSurface> GetSurfaceSnapshot() MOZ_OVERRIDE
-  { EnsureTarget(); return mTarget->Snapshot(); }
+  mozilla::TemporaryRef<mozilla::gfx::SourceSurface> GetSurfaceSnapshot() MOZ_OVERRIDE;
 
   NS_IMETHOD SetIsOpaque(bool isOpaque) MOZ_OVERRIDE;
   NS_IMETHOD Reset() MOZ_OVERRIDE;

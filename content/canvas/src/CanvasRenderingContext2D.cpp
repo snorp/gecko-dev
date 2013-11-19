@@ -1063,6 +1063,15 @@ CanvasRenderingContext2D::GetImageBuffer(uint8_t** aImageBuffer,
   *aFormat = 0;
 
   EnsureTarget();
+
+  #ifdef USE_SKIA_GPU
+    // This is really slow with the GL backend. Right now this naively assumes
+    // that if you're going to do a readback once, you're likely to do it again.
+    // We may want to use a more sophisticated heuristic, but this at least catches
+    // the pathological putImageData/getImageData cases.
+    Demote();
+  #endif
+
   RefPtr<SourceSurface> snapshot = mTarget->Snapshot();
   if (!snapshot) {
     return;
@@ -3920,6 +3929,18 @@ CanvasRenderingContext2D::GetThebesSurface(gfxASurface **surface)
   NS_ADDREF(*surface);
 
   return NS_OK;
+}
+
+mozilla::TemporaryRef<mozilla::gfx::SourceSurface> 
+CanvasRenderingContext2D::GetSurfaceSnapshot()
+{
+  EnsureTarget();
+
+#ifdef USE_SKIA_GPU
+  Demote();
+#endif
+
+  return mTarget->Snapshot();
 }
 
 static already_AddRefed<ImageData>
