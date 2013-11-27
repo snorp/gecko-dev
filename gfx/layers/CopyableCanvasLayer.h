@@ -52,6 +52,7 @@ protected:
 
   nsRefPtr<gfxASurface> mSurface;
   nsRefPtr<mozilla::gl::GLContext> mGLContext;
+  mozilla::gfx::SurfaceStream* mStream;
   mozilla::RefPtr<mozilla::gfx::DrawTarget> mDrawTarget;
 
   uint32_t mCanvasFramebuffer;

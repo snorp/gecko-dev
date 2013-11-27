@@ -118,8 +118,10 @@ CanvasClientSurfaceStream::CanvasClientSurfaceStream(CompositableForwarder* aLay
 void
 CanvasClientSurfaceStream::Update(gfx::IntSize aSize, ClientCanvasLayer* aLayer)
 {
-  GLScreenBuffer* screen = aLayer->mGLContext->Screen();
-  SurfaceStream* stream = screen->Stream();
+  SurfaceStream* stream = aLayer->mStream;
+  if (!stream) {
+    stream = aLayer->mGLContext->Screen()->Stream();
+  }
 
   bool isCrossProcess = !(XRE_GetProcessType() == GeckoProcessType_Default);
   if (isCrossProcess) {
@@ -156,8 +158,9 @@ CanvasClientSurfaceStream::Update(gfx::IntSize aSize, ClientCanvasLayer* aLayer)
     if (!mBuffer) {
       StreamTextureClientOGL* textureClient = new StreamTextureClientOGL(mTextureInfo.mTextureFlags);
       textureClient->InitWith(stream, gfx::IntSize());
-      AddTextureClient(textureClient);
-      mBuffer = textureClient;
+      if (AddTextureClient(textureClient)) {
+        mBuffer = textureClient;
+      }
     }
 
     GetForwarder()->UseTexture(this, mBuffer);

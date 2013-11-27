@@ -38,7 +38,7 @@ ClientCanvasLayer::Initialize(const Data& aData)
  
   mCanvasClient = nullptr;
 
-  if (mGLContext) {
+  if (mGLContext && !mStream) {
     GLScreenBuffer* screen = mGLContext->Screen();
     SurfaceStreamType streamType =
         SurfaceStream::ChooseGLStreamType(SurfaceStream::OffMainThread,
