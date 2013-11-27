@@ -13,6 +13,7 @@
 #include "mozilla/layers/CompositorTypes.h"
 #include "mozilla/layers/LayersSurfaces.h"  // for SurfaceDescriptor
 #include "mozilla/layers/TextureClient.h"  // for DeprecatedTextureClient, etc
+#include "SurfaceStream.h"
 
 namespace mozilla {
 namespace layers {
@@ -56,6 +57,34 @@ protected:
   gl::SharedTextureShareType mShareType;
   bool mInverted;
 };
+
+class StreamTextureClientOGL : public TextureClient
+{
+public:
+  StreamTextureClientOGL(TextureFlags aFlags);
+
+  ~StreamTextureClientOGL();
+
+  virtual bool IsAllocated() const MOZ_OVERRIDE;
+
+  virtual bool ToSurfaceDescriptor(SurfaceDescriptor& aOutDescriptor) MOZ_OVERRIDE;
+
+  void InitWith(gfx::SurfaceStream* aStream,
+                gfx::IntSize aSize);
+
+  virtual gfx::IntSize GetSize() const { return mSize; }
+
+  virtual TextureClientData* DropTextureData() MOZ_OVERRIDE
+  {
+    MarkInvalid();
+    return nullptr;
+  }
+
+protected:
+  gfx::SurfaceStream* mStream;
+  gfx::IntSize mSize;
+};
+
 
 class DeprecatedTextureClientSharedOGL : public DeprecatedTextureClient
 {

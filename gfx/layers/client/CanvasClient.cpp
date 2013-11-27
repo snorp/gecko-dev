@@ -17,6 +17,8 @@
 #include "mozilla/layers/CompositableForwarder.h"
 #include "mozilla/layers/LayersTypes.h"
 #include "mozilla/layers/TextureClient.h"  // for TextureClient, etc
+#include "mozilla/layers/GrallocTextureClient.h"
+#include "mozilla/layers/TextureClientOGL.h"
 #include "nsAutoPtr.h"                  // for nsRefPtr
 #include "nsDebug.h"                    // for printf_stderr, NS_ASSERTION
 #include "nsXULAppAPI.h"                // for XRE_GetProcessType, etc
@@ -25,12 +27,6 @@
 #endif
 
 using namespace mozilla::gl;
-
-namespace mozilla {
-namespace gfx {
-class SharedSurface;
-}
-}
 
 namespace mozilla {
 namespace layers {
@@ -43,7 +39,7 @@ CanvasClient::CreateCanvasClient(CanvasClientType aType,
   if (aType == CanvasClientGLContext &&
       aForwarder->GetCompositorBackendType() == LAYERS_OPENGL) {
     aFlags |= TEXTURE_DEALLOCATE_CLIENT;
-    return new DeprecatedCanvasClientSurfaceStream(aForwarder, aFlags);
+    return new CanvasClientSurfaceStream(aForwarder, aFlags);
   }
   if (gfxPlatform::GetPlatform()->UseDeprecatedTextures()) {
     aFlags |= TEXTURE_DEALLOCATE_CLIENT;
@@ -111,6 +107,80 @@ CanvasClient2D::OnActorDestroy()
   if (mBuffer) {
     mBuffer->OnActorDestroy();
   }
+}
+
+CanvasClientSurfaceStream::CanvasClientSurfaceStream(CompositableForwarder* aLayerForwarder,
+                                     TextureFlags aFlags)
+  : CanvasClient(aLayerForwarder, aFlags)
+{
+}
+
+void
+CanvasClientSurfaceStream::Update(gfx::IntSize aSize, ClientCanvasLayer* aLayer)
+{
+  GLScreenBuffer* screen = aLayer->mGLContext->Screen();
+  SurfaceStream* stream = screen->Stream();
+
+  bool isCrossProcess = !(XRE_GetProcessType() == GeckoProcessType_Default);
+  if (isCrossProcess) {
+#ifdef MOZ_WIDGET_GONK
+    SharedSurface* surf = stream->SwapConsumer();
+    if (!surf) {
+      printf_stderr("surf is null post-SwapConsumer!\n");
+      return;
+    }
+
+    if (surf->Type() != SharedSurfaceType::Gralloc) {
+      printf_stderr("Unexpected non-Gralloc SharedSurface in IPC path!");
+      return;
+    }
+
+    SharedSurface_Gralloc* grallocSurf = SharedSurface_Gralloc::Cast(surf);
+
+    if (mBuffers.find(surf) == mBuffers.end()) {
+      GrallocTextureClientOGL* grallocTC = new GrallocTextureClientOGL(static_cast<GrallocBufferActor*>(grallocSurf->GetDescriptor().bufferChild()),
+                                                                       grallocSurf->Size(),
+                                                                       mTextureInfo.mTextureFlags);
+
+      mBuffers[surf] = grallocTC;
+      AddTextureClient(grallocTC);
+    }
+
+    GetForwarder()->UseTexture(this, mBuffers[surf]);
+#else
+    printf_stderr("isCrossProcess, but not MOZ_WIDGET_GONK! Someone needs to write some code!");
+    MOZ_ASSERT(false);
+#endif
+  } else {
+#ifndef MOZ_WIDGET_GONK
+    if (!mBuffer) {
+      StreamTextureClientOGL* textureClient = new StreamTextureClientOGL(mTextureInfo.mTextureFlags);
+      textureClient->InitWith(stream, gfx::IntSize());
+      AddTextureClient(textureClient);
+      mBuffer = textureClient;
+    }
+
+    GetForwarder()->UseTexture(this, mBuffer);
+#endif
+
+    // Bug 894405
+    //
+    // Ref this so the SurfaceStream doesn't disappear unexpectedly. The
+    // Compositor will need to unref it when finished.
+    aLayer->mGLContext->AddRef();
+  }
+
+  aLayer->Painted();
+}
+
+void
+CanvasClientSurfaceStream::OnActorDestroy()
+{
+#ifndef MOZ_WIDGET_GONK
+  if (mBuffer) {
+    mBuffer->OnActorDestroy();
+  }
+#endif
 }
 
 void
