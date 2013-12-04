@@ -7,7 +7,8 @@
 #include "SourceSurfaceSkia.h"
 #include "ScaledFontBase.h"
 #include "ScaledFontCairo.h"
-#include "skia/SkDevice.h"
+#include "skia/SkGpuDevice.h"
+#include "skia/SkBitmapDevice.h"
 #include "FilterNodeSoftware.h"
 
 #ifdef USE_SKIA_GPU
@@ -750,7 +751,7 @@ DrawTargetSkia::CopySurface(SourceSurface *aSurface,
 bool
 DrawTargetSkia::Init(const IntSize &aSize, SurfaceFormat aFormat)
 {
-  SkAutoTUnref<SkDevice> device(new SkDevice(GfxFormatToSkiaConfig(aFormat), aSize.width, aSize.height));
+  SkAutoTUnref<SkBaseDevice> device(new SkBitmapDevice(GfxFormatToSkiaConfig(aFormat), aSize.width, aSize.height));
 
   SkBitmap bitmap = device->accessBitmap(true);
   if (!bitmap.allocPixels()) {
@@ -795,7 +796,7 @@ DrawTargetSkia::InitWithGLContextAndGrGLInterface(GenericRefCountedBase* aGLCont
   targetDescriptor.fRenderTargetHandle = 0; // GLContext always exposes the right framebuffer as id 0
 
   SkAutoTUnref<GrRenderTarget> target(mGrContext->wrapBackendRenderTarget(targetDescriptor));
-  SkAutoTUnref<SkDevice> device(new SkGpuDevice(mGrContext.get(), target.get()));
+  SkAutoTUnref<SkGpuDevice> device(new SkGpuDevice(mGrContext.get(), target.get()));
   SkAutoTUnref<SkCanvas> canvas(new SkCanvas(device.get()));
   mCanvas = canvas.get();
 
@@ -823,8 +824,8 @@ DrawTargetSkia::Init(unsigned char* aData, const IntSize &aSize, int32_t aStride
   SkBitmap bitmap;
   bitmap.setConfig(GfxFormatToSkiaConfig(aFormat), aSize.width, aSize.height, aStride);
   bitmap.setPixels(aData);
-  bitmap.setIsOpaque(isOpaque);
-  SkAutoTUnref<SkCanvas> canvas(new SkCanvas(new SkDevice(bitmap)));
+  //bitmap.setIsOpaque(isOpaque);
+  SkAutoTUnref<SkCanvas> canvas(new SkCanvas(new SkBitmapDevice(bitmap)));
 
   mSize = aSize;
   mCanvas = canvas.get();
