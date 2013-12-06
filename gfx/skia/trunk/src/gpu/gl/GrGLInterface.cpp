@@ -34,11 +34,13 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
     GR_STATIC_ASSERT(kNone_GrGLBinding == 0);
 
     if (0 == (binding & fBindingsExported)) {
+        printf("fBindingsExported\n");
         return false;
     }
 
     GrGLExtensions extensions;
     if (!extensions.init(binding, this)) {
+        printf("extensions init failed\n");
         return false;
     }
 
@@ -135,6 +137,7 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
         NULL == fGenFramebuffers ||
         NULL == fGenRenderbuffers ||
         NULL == fRenderbufferStorage) {
+        printf("missing stuff\n");
         return false;
     }
 
@@ -158,6 +161,7 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
         if (NULL == fStencilFuncSeparate ||
             NULL == fStencilMaskSeparate ||
             NULL == fStencilOpSeparate) {
+            printf("missing stencil ES\n");
             return false;
         }
     } else if (kDesktop_GrGLBinding == binding) {
@@ -166,14 +170,17 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
             if (NULL == fStencilFuncSeparate ||
                 NULL == fStencilMaskSeparate ||
                 NULL == fStencilOpSeparate) {
+                printf("missing stencil desktop\n");
                 return false;
             }
         }
         if (glVer >= GR_GL_VER(3,0) && NULL == fBindFragDataLocation) {
+            printf("missing fBindFragDataLocation\n");
             return false;
         }
         if (glVer >= GR_GL_VER(2,0) || extensions.has("GL_ARB_draw_buffers")) {
             if (NULL == fDrawBuffers) {
+                printf("fDrawBuffers\n");
                 return false;
             }
         }
@@ -186,6 +193,7 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
                 NULL == fGetQueryiv ||
                 NULL == fGetQueryObjectiv ||
                 NULL == fGetQueryObjectuiv) {
+                printf("missing queries\n");
                 return false;
             }
         }
@@ -194,11 +202,13 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
             extensions.has("GL_EXT_timer_query")) {
             if (NULL == fGetQueryObjecti64v ||
                 NULL == fGetQueryObjectui64v) {
+                printf("missing get query object\n");
                 return false;
             }
         }
         if (glVer >= GR_GL_VER(3,3) || extensions.has("GL_ARB_timer_query")) {
             if (NULL == fQueryCounter) {
+                printf("fQueryCounter\n");
                 return false;
             }
         }
@@ -213,6 +223,7 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
                 NULL == fTexGenfv ||
                 NULL == fTexGeni ||
                 NULL == fVertexPointer) {
+                printf("core stuff\n");
                 return false;
             }
         }
@@ -276,6 +287,7 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
         (glVer >= GR_GL_VER(1,3)) ||
         extensions.has("GL_ARB_texture_compression")) {
         if (NULL == fCompressedTexImage2D) {
+            printf("texture compression\n");
             return false;
         }
     }
@@ -285,6 +297,7 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
         (NULL == fGetTexLevelParameteriv ||
          NULL == fDrawBuffer ||
          NULL == fReadBuffer)) {
+        printf("buffers \n");
         return false;
     }
 
@@ -295,11 +308,13 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
             extensions.has("GL_ARB_texture_storage") ||
             extensions.has("GL_EXT_texture_storage")) {
             if (NULL == fTexStorage2D) {
+                printf("storage2d\n");
                 return false;
             }
         }
     } else if (glVer >= GR_GL_VER(3,0) || extensions.has("GL_EXT_texture_storage")) {
         if (NULL == fTexStorage2D) {
+            printf("storage 2d\n");
             return false;
         }
     }
@@ -319,15 +334,18 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
         if (glVer >= GR_GL_VER(3,0) || extensions.has("GL_ARB_framebuffer_object")) {
             if (NULL == fRenderbufferStorageMultisample ||
                 NULL == fBlitFramebuffer) {
+                printf("blit framebuffer\n");
                 return false;
             }
         } else {
             if (extensions.has("GL_EXT_framebuffer_blit") &&
                 NULL == fBlitFramebuffer) {
+                printf("blit framebuffer 2\n");
                 return false;
             }
             if (extensions.has("GL_EXT_framebuffer_multisample") &&
                 NULL == fRenderbufferStorageMultisample) {
+                printf("multisample\n");
                 return false;
             }
         }
@@ -379,6 +397,7 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
     if (kDesktop_GrGLBinding == binding || extensions.has("GL_OES_mapbuffer")) {
         if (NULL == fMapBuffer ||
             NULL == fUnmapBuffer) {
+            printf("mapbuffer\n");
             return false;
         }
     }
@@ -387,6 +406,7 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
     if (kDesktop_GrGLBinding == binding &&
         (glVer >= GR_GL_VER(3,3) || extensions.has("GL_ARB_blend_func_extended"))) {
         if (NULL == fBindFragDataLocationIndexed) {
+            printf("fBindFragDataLocationIndexed\n");
             return false;
         }
     }
@@ -394,6 +414,7 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
     // glGetStringi was added in version 3.0 of both desktop and ES.
     if (glVer >= GR_GL_VER(3, 0)) {
         if (NULL == fGetStringi) {
+            printf("fGetStringi\n");
             return false;
         }
     }
@@ -403,6 +424,7 @@ bool GrGLInterface::validate(GrGLBinding binding) const {
             if (NULL == fBindVertexArray ||
                 NULL == fDeleteVertexArrays ||
                 NULL == fGenVertexArrays) {
+                printf("fBindVertexArray\n");
                 return false;
             }
         }

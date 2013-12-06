@@ -786,6 +786,8 @@ DrawTargetSkia::InitWithGLContextAndGrGLInterface(GenericRefCountedBase* aGLCont
   SkAutoTUnref<GrContext> gr(GrContext::Create(kOpenGL_GrBackend, backendContext));
   mGrContext = gr.get();
 
+  printf("SNORP: mGrContext=%p\n", mGrContext.get());
+
   GrBackendRenderTargetDesc targetDescriptor;
 
   targetDescriptor.fWidth = mSize.width;
@@ -795,7 +797,9 @@ DrawTargetSkia::InitWithGLContextAndGrGLInterface(GenericRefCountedBase* aGLCont
   targetDescriptor.fSampleCnt = 0;
   targetDescriptor.fRenderTargetHandle = 0; // GLContext always exposes the right framebuffer as id 0
 
-  SkAutoTUnref<GrRenderTarget> target(mGrContext->wrapBackendRenderTarget(targetDescriptor));
+  printf("SNORP: mGrContext=%p\n", mGrContext.get());
+
+  SkAutoTUnref<GrRenderTarget> target(mGrContext.get()->wrapBackendRenderTarget(targetDescriptor));
   SkAutoTUnref<SkGpuDevice> device(new SkGpuDevice(mGrContext.get(), target.get()));
   SkAutoTUnref<SkCanvas> canvas(new SkCanvas(device.get()));
   mCanvas = canvas.get();

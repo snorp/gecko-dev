@@ -10,6 +10,7 @@
 
 #include "GrGLFunctions.h"
 #include "SkRefCnt.h"
+#include "stdio.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -114,8 +115,20 @@ private:
     template <typename FNPTR_TYPE> class GLPtr {
     public:
         GLPtr() : fPtr(NULL) {}
-        GLPtr operator =(FNPTR_TYPE ptr) { fPtr = ptr; return *this; }
-        operator FNPTR_TYPE() const { return fPtr; }
+        GLPtr operator =(FNPTR_TYPE ptr) {
+            if (!ptr) {
+                printf("null pointer!\n");
+            }
+
+            fPtr = ptr;
+            return *this;
+        }
+        operator FNPTR_TYPE() const {
+            if (!fPtr)
+                printf("requesting null pointer\n");
+            
+            return fPtr;
+        }
     private:
         FNPTR_TYPE fPtr;
     };

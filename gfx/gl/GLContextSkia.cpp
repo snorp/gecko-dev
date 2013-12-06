@@ -114,6 +114,12 @@ GrGLvoid glClearStencil_mozilla(GrGLint s)
     return sGLContext.get()->fClearStencil(s);
 }
 
+GrGLvoid glCopyTexSubImage2D_mozilla(GrGLenum target, GrGLint level, GrGLint xoffset,
+                                     GrGLint yoffset, GrGLint x, GrGLint y, GrGLsizei width, GrGLsizei height)
+{
+    return sGLContext.get()->fCopyTexSubImage2D(target, level, xoffset, yoffset, x, y, width, height);
+}
+
 GrGLvoid glColorMask_mozilla(GrGLboolean red, GrGLboolean green, GrGLboolean blue, GrGLboolean alpha)
 {
     return sGLContext.get()->fColorMask(red, green, blue, alpha);
@@ -376,6 +382,10 @@ const GLubyte* glGetString_mozilla(GrGLenum name)
 GrGLint glGetUniformLocation_mozilla(GrGLuint program, const char* name)
 {
     return sGLContext.get()->fGetUniformLocation(program, name);
+}
+
+GrGLvoid glGenerateMipmap_mozilla(GLenum target) {
+    return sGLContext.get()->fGenerateMipmap(target);
 }
 
 GrGLvoid glLineWidth_mozilla(GrGLfloat width)
@@ -734,6 +744,7 @@ GrGLInterface* CreateGrGLInterfaceFromGLContext(GLContext* context)
     i->fClear = glClear_mozilla;
     i->fClearColor = glClearColor_mozilla;
     i->fClearStencil = glClearStencil_mozilla;
+    i->fCopyTexSubImage2D = glCopyTexSubImage2D_mozilla;
     i->fColorMask = glColorMask_mozilla;
     i->fCompileShader = glCompileShader_mozilla;
     i->fCreateProgram = glCreateProgram_mozilla;
@@ -772,6 +783,7 @@ GrGLInterface* CreateGrGLInterfaceFromGLContext(GLContext* context)
     i->fGetShaderiv = glGetShaderiv_mozilla;
     i->fGetString = glGetString_mozilla;
     i->fGetUniformLocation = glGetUniformLocation_mozilla;
+    i->fGenerateMipmap = glGenerateMipmap_mozilla;
     i->fLineWidth = glLineWidth_mozilla;
     i->fLinkProgram = glLinkProgram_mozilla;
     i->fPixelStorei = glPixelStorei_mozilla;
