@@ -6,6 +6,7 @@
 #include "mozilla/RefPtr.h"
 #include "skia/GrGLInterface.h"
 #include "skia/GrContext.h"
+#include "GLContext.h"
 #include "GLContextSkia.h"
 
 namespace mozilla {

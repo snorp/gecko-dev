@@ -31,6 +31,7 @@ class nsXULElement;
 namespace mozilla {
 namespace gfx {
 class SourceSurface;
+class SurfaceStream;
 }
 
 namespace dom {
@@ -628,6 +629,10 @@ protected:
   // accessing it. In the event of an error it will be equal to
   // sErrorTarget.
   mozilla::RefPtr<mozilla::gfx::DrawTarget> mTarget;
+
+#ifdef USE_SKIA_GPU
+  RefPtr<gfx::SurfaceStream> mStream;
+#endif
 
   /**
     * Flag to avoid duplicate calls to InvalidateFrame. Set to true whenever

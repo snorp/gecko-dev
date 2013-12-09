@@ -962,17 +962,17 @@ public:
     return mPermitSubpixelAA;
   }
 
-  virtual GenericRefCountedBase* GetSkiaGLGlue() const {
-    return nullptr;
-  }
-
 #ifdef USE_SKIA_GPU
-  virtual void InitWithGrContext(GenericRefCountedBase* aGlue,
-                                 GrContext* aGrContext,
+  virtual void InitWithGrContext(GrContext* aGrContext,
                                  const IntSize &aSize,
                                  SurfaceFormat aFormat)
   {
     MOZ_CRASH();
+  }
+
+  virtual uint32_t GetTextureID() const
+  {
+    return 0;
   }
 #endif
 
@@ -1075,8 +1075,7 @@ public:
 
 #ifdef USE_SKIA_GPU
   static TemporaryRef<DrawTarget>
-    CreateDrawTargetSkiaWithGrContext(GenericRefCountedBase* aGLContext,
-                                      GrContext* aGrContext,
+    CreateDrawTargetSkiaWithGrContext(GrContext* aGrContext,
                                       const IntSize &aSize,
                                       SurfaceFormat aFormat);
 

@@ -104,18 +104,10 @@ public:
   void Init(unsigned char* aData, const IntSize &aSize, int32_t aStride, SurfaceFormat aFormat);
 
 #ifdef USE_SKIA_GPU
-  virtual GenericRefCountedBase* GetSkiaGLGlue() const MOZ_OVERRIDE { return mGlue; }
-  void InitWithGrContext(GenericRefCountedBase* aGlue,
-                         GrContext* aGrContext,
+  void InitWithGrContext(GrContext* aGrContext,
                          const IntSize &aSize,
                          SurfaceFormat aFormat) MOZ_OVERRIDE;
-
-  void SetCacheLimits(int aCount, int aSizeInBytes);
-  void PurgeCaches();
-
-  static void SetGlobalCacheLimits(int aCount, int aSizeInBytes);
-  static void RebalanceCacheLimits();
-  static void PurgeAllCaches();
+  uint32_t GetTextureID() const { return mTexture; }
 #endif
 
   operator std::string() const {
@@ -133,11 +125,8 @@ private:
   SkRect SkRectCoveringWholeSurface() const;
 
 #ifdef USE_SKIA_GPU
-  RefPtr<GenericRefCountedBase> mGlue;
   SkRefPtr<GrContext> mGrContext;
-
-  static int sTextureCacheCount;
-  static int sTextureCacheSizeInBytes;
+  uint32_t mTexture;
 #endif
 
   IntSize mSize;

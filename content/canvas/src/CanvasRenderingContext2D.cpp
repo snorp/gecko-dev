@@ -98,7 +98,9 @@
 #undef free // apparently defined by some windows header, clashing with a free()
             // method in SkTypes.h
 #include "SkiaGLGlue.h"
+#include "SurfaceStream.h"
 #include "SurfaceTypes.h"
+#include "mozilla/layers/ISurfaceAllocator.h"
 #include "nsIGfxInfo.h"
 #endif
 using mozilla::gl::GLContext;
@@ -437,20 +439,12 @@ public:
     CanvasRenderingContext2DUserData* self =
       static_cast<CanvasRenderingContext2DUserData*>(aData);
     CanvasRenderingContext2D* context = self->mContext;
-    if (!context)
+    if (!context || !context->mStream || !context->mTarget)
       return;
 
-    GLContext* glContext = static_cast<SkiaGLGlue*>(context->mTarget->GetSkiaGLGlue())->GetGLContext();
-    if (!glContext)
-      return;
-
-    if (context->mTarget) {
-      // Since SkiaGL default to store drawing command until flush
-      // We will have to flush it before present.
-      context->mTarget->Flush();
-    }
-    glContext->MakeCurrent();
-    glContext->PublishFrame();
+    // Since SkiaGL default to store drawing command until flush
+    // We will have to flush it before present.
+    context->mTarget->Flush();
   }
 #endif
 
@@ -554,6 +548,7 @@ CanvasRenderingContext2D::CanvasRenderingContext2D()
 
 #ifdef USE_SKIA_GPU
   mForceSoftware = false;
+  mStream = nullptr;
 #endif
 }
 
@@ -630,6 +625,7 @@ CanvasRenderingContext2D::Reset()
   }
 
   mTarget = nullptr;
+  mStream = nullptr;
 
   // Since the target changes the backing texture will change, and this will
   // no longer be valid.
@@ -752,7 +748,7 @@ CanvasRenderingContext2D::RedrawUser(const gfxRect& r)
 void CanvasRenderingContext2D::Demote()
 {
 #ifdef  USE_SKIA_GPU
-  if (!IsTargetValid() || mForceSoftware || !static_cast<SkiaGLGlue*>(mTarget->GetSkiaGLGlue())->GetGLContext())
+  if (!IsTargetValid() || mForceSoftware || !mStream)
     return;
 
   RemoveDemotableContext(this);
@@ -760,6 +756,7 @@ void CanvasRenderingContext2D::Demote()
   RefPtr<SourceSurface> snapshot = mTarget->Snapshot();
   RefPtr<DrawTarget> oldTarget = mTarget;
   mTarget = nullptr;
+  mStream = nullptr;
   mResetLayer = true;
   mForceSoftware = true;
 
@@ -793,11 +790,7 @@ CanvasRenderingContext2D::DemotableContexts()
 void
 CanvasRenderingContext2D::DemoteOldestContextIfNecessary()
 {
-#ifdef MOZ_GFX_OPTIMIZE_MOBILE
-  const size_t kMaxContexts = 2;
-#else
-  const size_t kMaxContexts = 16;
-#endif
+  const size_t kMaxContexts = 64;
 
   std::vector<CanvasRenderingContext2D*>& contexts = DemotableContexts();
   if (contexts.size() < kMaxContexts)
@@ -859,35 +852,23 @@ CanvasRenderingContext2D::EnsureTarget()
 
      if (layerManager) {
 #ifdef USE_SKIA_GPU
-      if (gfxPlatform::GetPlatform()->UseAcceleratedSkiaCanvas()) {
-        SurfaceCaps caps = SurfaceCaps::ForRGBA();
-        caps.preserve = true;
-
-#ifdef MOZ_WIDGET_GONK
-        layers::ShadowLayerForwarder *forwarder = layerManager->AsShadowForwarder();
-        if (forwarder) {
-          caps.surfaceAllocator = static_cast<layers::ISurfaceAllocator*>(forwarder);
-        }
-#endif
-
+      if (gfxPlatform::GetPlatform()->UseAcceleratedSkiaCanvas() &&
+          !mForceSoftware &&
+          CheckSizeForSkiaGL(size)) {
         DemoteOldestContextIfNecessary();
 
-        nsRefPtr<GLContext> glContext;
         nsCOMPtr<nsIGfxInfo> gfxInfo = do_GetService("@mozilla.org/gfx/info;1");
-        nsString vendor;
 
-        if (!mForceSoftware && CheckSizeForSkiaGL(size))
-        {
-          glContext = GLContextProvider::CreateOffscreen(gfxIntSize(size.width, size.height),
-                                                         caps);
-        }
+        SkiaGLGlue* glue = gfxPlatform::GetPlatform()->GetSkiaGLGlue();
 
-        if (glContext) {
-          SkiaGLGlue* glue = new SkiaGLGlue(glContext);
+        if (glue) {
           // Unfortunately we need to explicitly pass in the GrContext object here because to Factory (and the rest
           // of Moz2D), the SkiaGLGlue object is just a GenericRefCounted and so it can't pull in the
           // GrContext there.
-          mTarget = Factory::CreateDrawTargetSkiaWithGrContext(glue, glue->GetGrContext(), size, format);
+          mTarget = Factory::CreateDrawTargetSkiaWithGrContext(glue->GetGrContext(), size, format);
+          MOZ_ASSERT(mTarget, "Failed to create SkiaGL DrawTarget");
+
+          mStream = gfx::SurfaceStream::CreateForType(SurfaceStreamType::TripleBuffer, glue->GetGLContext());
           AddDemotableContext(this);
         } else {
           mTarget = layerManager->CreateDrawTarget(size, format);
@@ -4062,7 +4043,17 @@ CanvasRenderingContext2D::GetCanvasLayer(nsDisplayListBuilder* aBuilder,
         aOldLayer->GetUserData(&g2DContextLayerUserData));
 
     CanvasLayer::Data data;
-    data.mGLContext = static_cast<GLContext*>(mTarget->GetSkiaGLGlue());
+#if USE_SKIA_GPU
+    if (mStream) {
+      SkiaGLGlue* glue = gfxPlatform::GetPlatform()->GetSkiaGLGlue();
+
+      if (glue) {
+        data.mGLContext = glue->GetGLContext();
+        data.mStream = mStream.get();
+      }
+    }
+#endif
+
     if (userData && userData->IsForContext(this) && aOldLayer->IsDataValid(data)) {
       nsRefPtr<CanvasLayer> ret = aOldLayer;
       return ret.forget();
@@ -4096,11 +4087,16 @@ CanvasRenderingContext2D::GetCanvasLayer(nsDisplayListBuilder* aBuilder,
 
   CanvasLayer::Data data;
 #ifdef USE_SKIA_GPU
-  GLContext* glContext = static_cast<SkiaGLGlue*>(mTarget->GetSkiaGLGlue())->GetGLContext();
-  if (glContext) {
-    canvasLayer->SetPreTransactionCallback(
-            CanvasRenderingContext2DUserData::PreTransactionCallback, userData);
-    data.mGLContext = glContext;
+  if (mStream) {
+    SkiaGLGlue* glue = gfxPlatform::GetPlatform()->GetSkiaGLGlue();
+
+    if (glue) {
+      canvasLayer->SetPreTransactionCallback(
+              CanvasRenderingContext2DUserData::PreTransactionCallback, userData);
+      data.mGLContext = glue->GetGLContext();
+      data.mStream = mStream.get();
+      data.mTexID = mTarget->GetTextureID();
+    }
   } else
 #endif
   {
