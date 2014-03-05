@@ -325,6 +325,14 @@
         <service
             android:exported="false"
             android:name="org.mozilla.gecko.NotificationService">
+            <intent-filter>
+              <action android:name="org.mozilla.gecko.SIMPLE_PUSH_NOTIFICATION"></action>
+            </intent-filter>
+        </service>
+
+        <service
+            android:exported="true"
+            android:name="org.mozilla.gecko.SimplePushService">
         </service>
 
 

@@ -325,6 +325,7 @@ gbjar.sources += [
     'ServiceNotificationClient.java',
     'SessionParser.java',
     'SharedPreferencesHelper.java',
+    'SimplePushService.java',
     'SiteIdentity.java',
     'SmsManager.java',
     'sqlite/ByteBufferInputStream.java',

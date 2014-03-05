@@ -12,6 +12,7 @@ import org.mozilla.gecko.util.ThreadUtils;
 
 import org.json.JSONObject;
 
+import android.app.Service;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.content.res.Resources;
@@ -111,8 +112,16 @@ public class GeckoThread extends Thread implements GeckoEventListener {
             Activity activity = (Activity)app;
             resourcePath = activity.getApplication().getPackageResourcePath();
             res = activity.getBaseContext().getResources();
-            GeckoLoader.setupGeckoEnvironment(activity, pluginDirs, app.getFilesDir().getPath());
+            GeckoLoader.setupGeckoEnvironment(activity, activity.getIntent(), pluginDirs, app.getFilesDir().getPath());
         }
+
+        if (app instanceof Service) {
+            Service service = (Service)app;
+            resourcePath = service.getPackageResourcePath();
+            res = service.getBaseContext().getResources();
+            GeckoLoader.setupGeckoEnvironment(service, null, pluginDirs, app.getFilesDir().getPath());
+        }
+
         GeckoLoader.loadSQLiteLibs(app, resourcePath);
         GeckoLoader.loadNSSLibs(app, resourcePath);
         GeckoLoader.loadGeckoLibs(app, resourcePath);

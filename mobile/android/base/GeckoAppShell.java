@@ -352,9 +352,11 @@ public class GeckoAppShell
 
     // Called on the UI thread after Gecko loads.
     private static void geckoLoaded() {
-        GeckoEditable editable = new GeckoEditable();
-        // install the gecko => editable listener
-        mEditableListener = editable;
+        if (getContext() instanceof Activity) {
+            GeckoEditable editable = new GeckoEditable();
+            // install the gecko => editable listener
+            mEditableListener = editable;
+        }
     }
 
     static void sendPendingEventsToGecko() {
@@ -1402,6 +1404,9 @@ public class GeckoAppShell
     @WrapElementForJNI(stubName = "GetScreenDepthWrapper")
     public static synchronized int getScreenDepth() {
         if (sScreenDepth == 0) {
+            if (getGeckoInterface() == null)
+                return 0;
+
             sScreenDepth = 16;
             PixelFormat info = new PixelFormat();
             PixelFormat.getPixelFormatInfo(getGeckoInterface().getActivity().getWindowManager().getDefaultDisplay().getPixelFormat(), info);
