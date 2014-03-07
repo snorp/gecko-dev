@@ -192,6 +192,7 @@ public class GeckoThread extends Thread implements GeckoEventListener {
     @Override
     public void handleMessage(String event, JSONObject message) {
         if ("Gecko:Ready".equals(event)) {
+            Log.d(LOGTAG, "SNORP: gecko ready!");
             GeckoAppShell.getEventDispatcher().unregisterEventListener(event, this);
             setLaunchState(LaunchState.GeckoRunning);
             GeckoAppShell.sendPendingEventsToGecko();
@@ -207,6 +208,7 @@ public class GeckoThread extends Thread implements GeckoEventListener {
 
     static void setLaunchState(LaunchState setState) {
         synchronized (sLock) {
+            Log.d(LOGTAG, "SNORP: setting launch state: " + setState);
             sLaunchState = setState;
         }
     }
@@ -216,6 +218,7 @@ public class GeckoThread extends Thread implements GeckoEventListener {
      * state is <code>checkState</code>; otherwise do nothing and return false.
      */
     static boolean checkAndSetLaunchState(LaunchState checkState, LaunchState setState) {
+        Log.d(LOGTAG, "SNORP: checking launch state " + checkState + ", setting state " + setState + ", current state " + sLaunchState);
         synchronized (sLock) {
             if (sLaunchState != checkState)
                 return false;

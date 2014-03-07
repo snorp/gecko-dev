@@ -1543,8 +1543,10 @@ public abstract class GeckoApp
             GeckoThread.setAction(intent.getAction());
             GeckoThread.setUri(passedUri);
         }
+
         if (!ACTION_DEBUG.equals(action) &&
             GeckoThread.checkAndSetLaunchState(GeckoThread.LaunchState.Launching, GeckoThread.LaunchState.Launched)) {
+            Log.d(LOGTAG, "SNORP: starting gecko from fennec");
             GeckoThread.createAndStart();
         } else if (ACTION_DEBUG.equals(action) &&
             GeckoThread.checkAndSetLaunchState(GeckoThread.LaunchState.Launching, GeckoThread.LaunchState.WaitForDebugger)) {

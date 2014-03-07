@@ -62,9 +62,14 @@ BrowserCLH.prototype = {
     let openURL = "about:home";
     let pinned = false;
     let guest = false;
+    let service = false;
 
     let width = 1;
     let height = 1;
+
+    for (let i = 0; i < aCmdLine.length; i++) {
+      dump("SNORP: cmdline: " + aCmdLine.getArgument(i));
+    }
 
     try {
       openURL = aCmdLine.handleFlagWithParam("url", false);
@@ -84,6 +89,12 @@ BrowserCLH.prototype = {
     } catch (e) { /* Optional */ }
 
     try {
+      service = aCmdLine.handleFlag("service", false);
+    } catch(e) { /* Optional */ }
+
+    dump("SNORP: service? " + service);
+
+    try {
       let uri = resolveURIInternal(aCmdLine, openURL);
       if (!uri)
         return;
@@ -94,6 +105,7 @@ BrowserCLH.prototype = {
       let browserWin = Services.wm.getMostRecentWindow("navigator:browser");
       if (browserWin) {
         if (!pinned) {
+          dump("SNORP: opening uri in recent window");
           browserWin.browserDOMWindow.openURI(uri, null, Ci.nsIBrowserDOMWindow.OPEN_NEWTAB, Ci.nsIBrowserDOMWindow.OPEN_EXTERNAL);
         }
       } else {
@@ -110,7 +122,12 @@ BrowserCLH.prototype = {
         if (!pinned)
           flags += ",all";
 
-        browserWin = openWindow(null, "chrome://browser/content/browser.xul", "_blank", flags, args);
+        if (service) {
+          dump("SNORP: opening service.xul");
+          browserWin = openWindow(null, "chrome://browser/content/service.xul", "_blank", flags, args);
+        } else {
+          browserWin = openWindow(null, "chrome://browser/content/browser.xul", "_blank", flags, args);
+        }
       }
 
       aCmdLine.preventDefault = true;

@@ -91,7 +91,6 @@
                   android:alwaysRetainTaskState="true"
                   android:configChanges="keyboard|keyboardHidden|mcc|mnc|orientation|screenSize"
                   android:windowSoftInputMode="stateUnspecified|adjustResize"
-                  android:launchMode="singleTask"
                   android:theme="@style/Gecko.App">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -325,13 +324,11 @@
         <service
             android:exported="false"
             android:name="org.mozilla.gecko.NotificationService">
-            <intent-filter>
-              <action android:name="org.mozilla.gecko.SIMPLE_PUSH_NOTIFICATION"></action>
-            </intent-filter>
         </service>
 
         <service
             android:exported="true"
+            android:taskAffinity="@ANDROID_PACKAGE_NAME@.BROWSER"
             android:name="org.mozilla.gecko.SimplePushService">
         </service>
 
