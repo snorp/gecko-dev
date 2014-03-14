@@ -37,6 +37,7 @@
 #include "StrongPointer.h"
 #include "mozilla/ClearOnShutdown.h"
 #include "nsPrintfCString.h"
+#include <unistd.h>
 
 using namespace mozilla;
 using namespace mozilla::widget::android;
@@ -135,6 +136,9 @@ jfieldID AndroidBridge::GetStaticFieldID(JNIEnv* env, jclass jClass,
 void
 AndroidBridge::ConstructBridge(JNIEnv *jEnv)
 {
+    if (sBridge)
+        return;
+
     /* NSS hack -- bionic doesn't handle recursive unloads correctly,
      * because library finalizer functions are called with the dynamic
      * linker lock still held.  This results in a deadlock when trying
@@ -214,7 +218,9 @@ bool
 AndroidBridge::SetMainThread(pthread_t thr)
 {
     ALOG_BRIDGE("AndroidBridge::SetMainThread");
+    MOZ_ASSERT(mThread == -1 || thr == mThread, "cannot change the main thread!");
     if (thr) {
+        printf_stderr("SNORP: set main thread id %d\n", thr);
         mThread = thr;
         mJavaVM->GetEnv((void**) &mJNIEnv, JNI_VERSION_1_2);
         return (bool) mJNIEnv;
@@ -473,6 +479,7 @@ AndroidBridge::GetScreenDepth()
     if (sDepth)
         return sDepth;
 
+    // FIXME: there should be no default depth
     const int DEFAULT_DEPTH = 16;
 
     if (HasEnv()) {

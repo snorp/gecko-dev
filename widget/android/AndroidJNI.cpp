@@ -62,6 +62,14 @@ Java_org_mozilla_gecko_GeckoAppShell_nativeInit(JNIEnv *jenv, jclass jc)
 }
 
 NS_EXPORT void JNICALL
+Java_org_mozilla_gecko_GeckoAppShell_nativeRunCommandLine(JNIEnv *jenv, jclass jc, jstring jCommandLine)
+{
+    const nsJNIString commandLine16(jCommandLine, jenv);
+    const NS_ConvertUTF16toUTF8 commandLine8(commandLine16);
+    printf_stderr("SNORP: running command line: %s\n", commandLine8.get());
+}
+
+NS_EXPORT void JNICALL
 Java_org_mozilla_gecko_GeckoAppShell_notifyGeckoOfEvent(JNIEnv *jenv, jclass jc, jobject event)
 {
     // poke the appshell

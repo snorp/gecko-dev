@@ -18,7 +18,7 @@
   for owning objects
                        -- scc
 */
-
+#include <unistd.h>
 #include "mozilla/Attributes.h"
 #include "mozilla/TypeTraits.h"
 #include "mozilla/Assertions.h"
@@ -809,6 +809,9 @@ class nsCOMPtr MOZ_FINAL
       T*
       operator->() const
         {
+          if (mRawPtr == 0) {
+            printf_stderr("SNORP: blah\n");
+          }
           NS_ABORT_IF_FALSE(mRawPtr != 0, "You can't dereference a NULL nsCOMPtr with operator->().");
           return get();
         }

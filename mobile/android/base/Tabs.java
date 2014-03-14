@@ -716,6 +716,8 @@ public class Tabs implements GeckoEventListener {
         Tab added = null;
         boolean delayLoad = (flags & LOADURL_DELAY_LOAD) != 0;
 
+        Log.d(LOGTAG, "SNORP: loadUrl: " + url);
+
         // delayLoad implies background tab
         boolean background = delayLoad || (flags & LOADURL_BACKGROUND) != 0;
 

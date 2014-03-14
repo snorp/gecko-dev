@@ -43,14 +43,15 @@ public class GeckoThread extends Thread implements GeckoEventListener {
 
     private static GeckoThread sGeckoThread;
 
-    private final String mArgs;
-    private final String mAction;
-    private final String mUri;
+    private String mArgs;
+    private String mAction;
+    private String mUri;
+    private String mResourcePath;
 
     public static boolean ensureInit() {
         ThreadUtils.assertOnUiThread();
         if (isCreated())
-            return false;
+            return true;
         sGeckoThread = new GeckoThread(sArgs, sAction, sUri);
         return true;
     }
@@ -84,56 +85,75 @@ public class GeckoThread extends Thread implements GeckoEventListener {
     }
 
     public static void createAndStart() {
-        if (ensureInit())
+        if (ensureInit()) {
+            Log.d(LOGTAG, "SNORP: starting new gecko");
             sGeckoThread.start();
+        }
+    }
+
+    public static void runCommandLine() {
+        if (!isCreated())
+            return;
+
+        ThreadUtils.sGeckoHandler.post(new Runnable() {
+            public void run() {
+                Log.d(LOGTAG, "SNORP: running existing gecko");
+                sGeckoThread.update(sArgs, sAction, sUri);
+                sGeckoThread.runGecko();                
+            }
+        });
     }
 
     private String initGeckoEnvironment() {
-        // At some point while loading the gecko libs our default locale gets set
-        // so just save it to locale here and reset it as default after the join
-        Locale locale = Locale.getDefault();
+        if (mResourcePath == null) {
+            // At some point while loading the gecko libs our default locale gets set
+            // so just save it to locale here and reset it as default after the join
+            Locale locale = Locale.getDefault();
 
-        if (locale.toString().equalsIgnoreCase("zh_hk")) {
-            locale = Locale.TRADITIONAL_CHINESE;
+            if (locale.toString().equalsIgnoreCase("zh_hk")) {
+                locale = Locale.TRADITIONAL_CHINESE;
+                Locale.setDefault(locale);
+            }
+
+            Context app = GeckoAppShell.getContext();
+            String resourcePath = "";
+            Resources res  = null;
+            String[] pluginDirs = null;
+            try {
+                pluginDirs = GeckoAppShell.getPluginDirectories();
+            } catch (Exception e) {
+                Log.w(LOGTAG, "Caught exception getting plugin dirs.", e);
+            }
+            
+            if (app instanceof Activity) {
+                Activity activity = (Activity)app;
+                resourcePath = activity.getApplication().getPackageResourcePath();
+                res = activity.getBaseContext().getResources();
+                GeckoLoader.setupGeckoEnvironment(activity, activity.getIntent(), pluginDirs, app.getFilesDir().getPath());
+            }
+
+            if (app instanceof Service) {
+                Service service = (Service)app;
+                resourcePath = service.getPackageResourcePath();
+                res = service.getBaseContext().getResources();
+                GeckoLoader.setupGeckoEnvironment(service, null, pluginDirs, app.getFilesDir().getPath());
+            }
+
+            GeckoLoader.loadSQLiteLibs(app, resourcePath);
+            GeckoLoader.loadNSSLibs(app, resourcePath);
+            GeckoLoader.loadGeckoLibs(app, resourcePath);
+            GeckoJavaSampler.setLibsLoaded();
+
             Locale.setDefault(locale);
+
+            Configuration config = res.getConfiguration();
+            config.locale = locale;
+            res.updateConfiguration(config, res.getDisplayMetrics());
+
+            mResourcePath = resourcePath;
         }
 
-        Context app = GeckoAppShell.getContext();
-        String resourcePath = "";
-        Resources res  = null;
-        String[] pluginDirs = null;
-        try {
-            pluginDirs = GeckoAppShell.getPluginDirectories();
-        } catch (Exception e) {
-            Log.w(LOGTAG, "Caught exception getting plugin dirs.", e);
-        }
-        
-        if (app instanceof Activity) {
-            Activity activity = (Activity)app;
-            resourcePath = activity.getApplication().getPackageResourcePath();
-            res = activity.getBaseContext().getResources();
-            GeckoLoader.setupGeckoEnvironment(activity, activity.getIntent(), pluginDirs, app.getFilesDir().getPath());
-        }
-
-        if (app instanceof Service) {
-            Service service = (Service)app;
-            resourcePath = service.getPackageResourcePath();
-            res = service.getBaseContext().getResources();
-            GeckoLoader.setupGeckoEnvironment(service, null, pluginDirs, app.getFilesDir().getPath());
-        }
-
-        GeckoLoader.loadSQLiteLibs(app, resourcePath);
-        GeckoLoader.loadNSSLibs(app, resourcePath);
-        GeckoLoader.loadGeckoLibs(app, resourcePath);
-        GeckoJavaSampler.setLibsLoaded();
-
-        Locale.setDefault(locale);
-
-        Configuration config = res.getConfiguration();
-        config.locale = locale;
-        res.updateConfiguration(config, res.getDisplayMetrics());
-
-        return resourcePath;
+        return mResourcePath;
     }
 
     private String getTypeFromAction(String action) {
@@ -175,6 +195,16 @@ public class GeckoThread extends Thread implements GeckoEventListener {
         ThreadUtils.sGeckoHandler = new Handler();
         ThreadUtils.sGeckoQueue = Looper.myQueue();
 
+        runGecko();        
+    }
+
+    public void update(String args, String action, String uri) {
+        mArgs = args;
+        mAction = action;
+        mUri = uri;
+    }
+
+    public void runGecko() {
         String path = initGeckoEnvironment();
 
         Log.w(LOGTAG, "zerdatime " + SystemClock.uptimeMillis() + " - runGecko");

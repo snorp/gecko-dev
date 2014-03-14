@@ -366,7 +366,8 @@ nsWindow::Show(bool aState)
 {
     ALOG("nsWindow[%p]::Show %d", (void*)this, aState);
 
-    if (mWindowType == eWindowType_invisible) {
+    if (mWindowType == eWindowType_invisible ||
+        FindTopLevel()->mWindowType == eWindowType_invisible) {
         ALOG("trying to show invisible window! ignoring..");
         return NS_ERROR_FAILURE;
     }
@@ -566,6 +567,13 @@ nsWindow::SetFocus(bool aRaise)
 {
     if (!aRaise) {
         ALOG("nsWindow::SetFocus: can't set focus without raising, ignoring aRaise = false!");
+        return NS_ERROR_FAILURE;
+    }
+
+    if (mWindowType == eWindowType_invisible ||
+        FindTopLevel()->mWindowType == eWindowType_invisible) {
+        ALOG("trying to focus invisible window! ignoring..");
+        return NS_ERROR_FAILURE;
     }
 
     nsWindow *top = FindTopLevel();
@@ -578,6 +586,12 @@ nsWindow::SetFocus(bool aRaise)
 void
 nsWindow::BringToFront()
 {
+    if (mWindowType == eWindowType_invisible ||
+        FindTopLevel()->mWindowType == eWindowType_invisible) {
+        ALOG("trying to raise invisible window! ignoring..");
+        return;
+    }
+
     // If the window to be raised is the same as the currently raised one,
     // do nothing. We need to check the focus manager as well, as the first
     // window that is created will be first in the window list but won't yet
@@ -731,9 +745,12 @@ nsWindow::CreateLayerManager(int aCompositorWidth, int aCompositorHeight)
 
     nsWindow *topLevelWindow = FindTopLevel();
     if (!topLevelWindow || topLevelWindow->mWindowType == eWindowType_invisible) {
+        printf_stderr("SNORP: not creating layer manager for %p\n", this);
         // don't create a layer manager for an invisible top-level window
         return;
     }
+
+    printf_stderr("SNORP: creating layer manager\n");
 
     mUseLayersAcceleration = ComputeShouldAccelerate(mUseLayersAcceleration);
 
@@ -766,6 +783,8 @@ nsWindow::OnGlobalAndroidEvent(AndroidGeckoEvent *ae)
     nsWindow *win = TopWindow();
     if (!win)
         return;
+
+    printf_stderr("SNORP: OnGlobalAndroidEvent %d\n", ae->Type());
 
     switch (ae->Type()) {
         case AndroidGeckoEvent::FORCED_RESIZE:
@@ -910,6 +929,7 @@ nsWindow::OnGlobalAndroidEvent(AndroidGeckoEvent *ae)
             break;
 
         case AndroidGeckoEvent::COMPOSITOR_CREATE:
+            printf_stderr("SNORP: creating compositor %d x %d\n", ae->Width(), ae->Height());
             win->CreateLayerManager(ae->Width(), ae->Height());
             break;
 

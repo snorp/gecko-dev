@@ -106,6 +106,7 @@ import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.TextureView;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.webkit.MimeTypeMap;
 import android.widget.AbsoluteLayout;
@@ -190,6 +191,8 @@ public class GeckoAppShell
 
     // Initialization methods
     public static native void nativeInit();
+
+    public static native void nativeRunCommandLine(String args);
 
     // helper methods
     //    public static native void setSurfaceView(GeckoSurfaceView sv);
@@ -303,22 +306,25 @@ public class GeckoAppShell
     }
 
     public static void runGecko(String apkPath, String args, String url, String type) {
-        // Preparation for pumpMessageLoop()
-        MessageQueue.IdleHandler idleHandler = new MessageQueue.IdleHandler() {
-            @Override public boolean queueIdle() {
-                final Handler geckoHandler = ThreadUtils.sGeckoHandler;
-                Message idleMsg = Message.obtain(geckoHandler);
-                // Use |Message.obj == GeckoHandler| to identify our "queue is empty" message
-                idleMsg.obj = geckoHandler;
-                geckoHandler.sendMessageAtFrontOfQueue(idleMsg);
-                // Keep this IdleHandler
-                return true;
-            }
-        };
-        Looper.myQueue().addIdleHandler(idleHandler);
+        MessageQueue.IdleHandler idleHandler = null;
+        if (!GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
+            // Preparation for pumpMessageLoop()
+            idleHandler = new MessageQueue.IdleHandler() {
+                @Override public boolean queueIdle() {
+                    final Handler geckoHandler = ThreadUtils.sGeckoHandler;
+                    Message idleMsg = Message.obtain(geckoHandler);
+                    // Use |Message.obj == GeckoHandler| to identify our "queue is empty" message
+                    idleMsg.obj = geckoHandler;
+                    geckoHandler.sendMessageAtFrontOfQueue(idleMsg);
+                    // Keep this IdleHandler
+                    return true;
+                }
+            };
+            Looper.myQueue().addIdleHandler(idleHandler);
 
-        // run gecko -- it will spawn its own thread
-        GeckoAppShell.nativeInit();
+            // run gecko -- it will spawn its own thread
+            GeckoAppShell.nativeInit();
+        }
 
         if (sLayerView != null)
             GeckoAppShell.setLayerClient(sLayerView.getLayerClient());
@@ -346,8 +352,10 @@ public class GeckoAppShell
         Log.d(LOGTAG, "GeckoLoader.nativeRun " + combinedArgs);
         GeckoLoader.nativeRun(combinedArgs);
 
-        // Remove pumpMessageLoop() idle handler
-        Looper.myQueue().removeIdleHandler(idleHandler);
+        if (idleHandler != null) {
+            // Remove pumpMessageLoop() idle handler
+            Looper.myQueue().removeIdleHandler(idleHandler);
+        }
     }
 
     // Called on the UI thread after Gecko loads.
@@ -481,7 +489,7 @@ public class GeckoAppShell
                     break;
                 }
                 long waited = SystemClock.uptimeMillis() - time;
-                Log.d(LOGTAG, "Gecko event sync taking too long: " + waited + "ms");
+                Log.d(LOGTAG, "Gecko event sync taking too long: " + waited + "ms", new Exception());
             }
         }
     }
@@ -688,7 +696,7 @@ public class GeckoAppShell
 
     @WrapElementForJNI
     public static void moveTaskToBack() {
-        if (getGeckoInterface() != null)
+        if (getGeckoInterface() != null && getGeckoInterface().getActivity() != null)
             getGeckoInterface().getActivity().moveTaskToBack(true);
     }
 
@@ -704,7 +712,7 @@ public class GeckoAppShell
         if (getGeckoInterface() != null) {
             if (gRestartScheduled) {
                 getGeckoInterface().doRestart();
-            } else {
+            } else if (getGeckoInterface().getActivity() != null) {
                 getGeckoInterface().getActivity().finish();
             }
         }
@@ -1404,12 +1412,11 @@ public class GeckoAppShell
     @WrapElementForJNI(stubName = "GetScreenDepthWrapper")
     public static synchronized int getScreenDepth() {
         if (sScreenDepth == 0) {
-            if (getGeckoInterface() == null)
-                return 0;
+            WindowManager manager = (WindowManager)getContext().getSystemService(Context.WINDOW_SERVICE);
 
             sScreenDepth = 16;
             PixelFormat info = new PixelFormat();
-            PixelFormat.getPixelFormatInfo(getGeckoInterface().getActivity().getWindowManager().getDefaultDisplay().getPixelFormat(), info);
+            PixelFormat.getPixelFormatInfo(manager.getDefaultDisplay().getPixelFormat(), info);
             if (info.bitsPerPixel >= 24 && isHighMemoryDevice()) {
                 sScreenDepth = 24;
             }

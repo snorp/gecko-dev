@@ -93,7 +93,7 @@ public final class GeckoProfile {
             return get(context, defaultProfileName);
         }
 
-        return get(context, "");
+        return get(context, "default");
     }
 
     public static GeckoProfile get(Context context, String profileName) {
@@ -313,7 +313,7 @@ public final class GeckoProfile {
         if (dir != null && dir.exists() && dir.isDirectory()) {
             mProfileDir = dir;
         } else {
-            Log.w(LOGTAG, "Requested profile directory missing.");
+            Log.w(LOGTAG, "Requested profile directory missing: " + dir);
         }
     }
 

@@ -266,6 +266,8 @@ const kFormHelperModeDisabled = 0;
 const kFormHelperModeEnabled = 1;
 const kFormHelperModeDynamic = 2;   // disabled on tablets
 
+dump("SNORP: hi from browser.js");
+
 var BrowserApp = {
   _tabs: [],
   _selectedTab: null,
@@ -870,6 +872,7 @@ var BrowserApp = {
   addTab: function addTab(aURI, aParams) {
     aParams = aParams || {};
 
+    dump("SNORP: new tab " + aURI);
     let newTab = new Tab(aURI, aParams);
     this._tabs.push(newTab);
 
@@ -1386,6 +1389,8 @@ var BrowserApp = {
 
   observe: function(aSubject, aTopic, aData) {
     let browser = this.selectedBrowser;
+
+    dump("SNORP: handling broadcast message: " + aTopic);
 
     switch (aTopic) {
 

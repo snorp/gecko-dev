@@ -646,6 +646,7 @@ static bool
 CreateConfig(EGLConfig* aConfig)
 {
     int32_t depth = gfxPlatform::GetPlatform()->GetScreenDepth();
+    printf_stderr("SNORP: screen depth %d\n", depth);
     if (!CreateConfig(aConfig, depth)) {
 #ifdef MOZ_WIDGET_ANDROID
         // Bug 736005
@@ -668,6 +669,8 @@ CreateConfig(EGLConfig* aConfig)
 already_AddRefed<GLContext>
 GLContextProviderEGL::CreateForWindow(nsIWidget *aWidget)
 {
+    printf_stderr("SNORP: creating EGL context for window %p\n", aWidget);
+
     if (!sEGLLibrary.EnsureInitialized()) {
         MOZ_CRASH("Failed to load EGL library!\n");
         return nullptr;
@@ -687,6 +690,8 @@ GLContextProviderEGL::CreateForWindow(nsIWidget *aWidget)
         MOZ_CRASH("Failed to create EGLSurface!\n");
         return nullptr;
     }
+
+    printf_stderr("SNORP: using surface %p\n", surface);
 
     SurfaceCaps caps = SurfaceCaps::Any();
     nsRefPtr<GLContextEGL> glContext =

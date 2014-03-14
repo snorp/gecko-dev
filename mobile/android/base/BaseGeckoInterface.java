@@ -48,7 +48,11 @@ public class BaseGeckoInterface implements GeckoAppShell.GeckoInterface {
     }
 
     public Activity getActivity() {
-        return (Activity)mContext;
+        if (mContext instanceof Activity) {
+            return (Activity)mContext;
+        } else {
+            return null;
+        }
     }
 
     public String getDefaultUAString() {
@@ -73,8 +77,13 @@ public class BaseGeckoInterface implements GeckoAppShell.GeckoInterface {
         ThreadUtils.postToUiThread(new Runnable() {
             @Override
             public void run() {
+                Activity activity = getActivity();
+                if (activity == null) {
+                    return;
+                }
+
                 // Hide/show the system notification bar
-                Window window = ((Activity)mContext).getWindow();
+                Window window = activity.getWindow();
                 window.setFlags(fullscreen ?
                                 WindowManager.LayoutParams.FLAG_FULLSCREEN : 0,
                                 WindowManager.LayoutParams.FLAG_FULLSCREEN);

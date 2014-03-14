@@ -18,6 +18,7 @@
 #include "AndroidBridge.h"
 #include "APKOpen.h"
 #include "nsExceptionHandler.h"
+#include "nsICommandLineRunner.h"
 
 #define LOG(args...) __android_log_print(ANDROID_LOG_INFO, MOZ_APP_NAME, args)
 
@@ -44,6 +45,8 @@ struct AutoAttachJavaThread {
 extern "C" NS_EXPORT void
 GeckoStart(void *data, const nsXREAppData *appData)
 {
+    static bool running = false;
+
 #ifdef MOZ_CRASHREPORTER
     const struct mapping_info *info = getLibraryMapping();
     while (info->name) {
@@ -52,10 +55,6 @@ GeckoStart(void *data, const nsXREAppData *appData)
       info++;
     }
 #endif
-
-    AutoAttachJavaThread attacher;
-    if (!attacher.attached)
-        return;
 
     if (!data) {
         LOG("Failed to get arguments for GeckoStart\n");
@@ -70,14 +69,45 @@ GeckoStart(void *data, const nsXREAppData *appData)
     }
     targs.AppendElement(static_cast<char *>(nullptr));
 
-    int result = XRE_main(targs.Length() - 1, targs.Elements(), appData, 0);
+    if (!running) {
+        AutoAttachJavaThread attacher;
+        if (!attacher.attached)
+            return;
 
-    if (result)
-        LOG("XRE_main returned %d", result);
+        running = true;
+        int result = XRE_main(targs.Length() - 1, targs.Elements(), appData, 0);
+        running = false;
 
-    mozilla::widget::android::GeckoAppShell::NotifyXreExit();
+        if (result)
+            LOG("XRE_main returned %d", result);
 
-    free(targs[0]);
-    nsMemory::Free(data);
+        mozilla::widget::android::GeckoAppShell::NotifyXreExit();
+    } else {
+        printf_stderr("SNORP: running in existing instance\n");
+        
+        nsCOMPtr<nsIFile> workingDir;
+        nsresult rv = NS_GetSpecialDirectory(NS_OS_CURRENT_WORKING_DIR, getter_AddRefs(workingDir));
+
+        nsCOMPtr<nsICommandLineRunner> cmdLine(do_CreateInstance("@mozilla.org/toolkit/command-line;1"));
+        if (!cmdLine) {
+            LOG("Couldn't create command line!");
+            return;
+        }
+
+        rv = cmdLine->Init(targs.Length() - 1, targs.Elements(), workingDir, nsICommandLine::STATE_REMOTE_EXPLICIT);
+        if (NS_FAILED(rv)) {
+            LOG("Failed to init command line!");
+            return;
+        }
+
+        rv = cmdLine->Run();
+        if (NS_FAILED(rv)) {
+            LOG("Failed to run command line!");
+        }
+    }
+
+    //free(targs[0]);
+    //nsMemory::Free(data);
+
     return;
 }

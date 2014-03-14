@@ -166,4 +166,18 @@ public final class ThreadUtils {
             getUiHandler().removeCallbacks(sPriorityResetRunnable);
         }
     }
+
+    public static void pause() {
+        while (true) {
+            pause(1000);
+        }
+    }
+
+    public static void pause(long millis) {
+        try {
+            Log.d(LOGTAG, "SNORP: sleeping");
+            Thread.sleep(millis);
+            Log.d(LOGTAG, "SNORP: resuming from sleep");
+        } catch (Exception e) {}
+    }
 }

@@ -1239,6 +1239,7 @@ public abstract class GeckoApp
         sAppContext = this;
         GeckoAppShell.setContextGetter(this);
         GeckoAppShell.setGeckoInterface(this);
+        Log.d(LOGTAG, "SNORP: set gecko interface");
         ThreadUtils.setUiThread(Thread.currentThread(), new Handler());
 
         Tabs.getInstance().attachToContext(this);
@@ -1260,12 +1261,14 @@ public abstract class GeckoApp
             return;
         }
 
+        /*
         if (GeckoThread.isCreated()) {
             // This happens when the GeckoApp activity is destroyed by Android
             // without killing the entire application (see Bug 769269).
             mIsRestoringActivity = true;
             Telemetry.HistogramAdd("FENNEC_RESTORING_ACTIVITY", 1);
         }
+        */
 
         // Fix for Bug 830557 on Tegra boards running Froyo.
         // This fix must be done before doing layout.
@@ -1544,9 +1547,12 @@ public abstract class GeckoApp
             GeckoThread.setUri(passedUri);
         }
 
-        if (!ACTION_DEBUG.equals(action) &&
+        Log.d(LOGTAG, "SNORP: wtf");
+        if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
+            GeckoThread.runCommandLine();
+        } else if (!ACTION_DEBUG.equals(action) &&
             GeckoThread.checkAndSetLaunchState(GeckoThread.LaunchState.Launching, GeckoThread.LaunchState.Launched)) {
-            Log.d(LOGTAG, "SNORP: starting gecko from fennec");
+            Log.d(LOGTAG, "SNORP: starting a NEW gecko from fennec");
             GeckoThread.createAndStart();
         } else if (ACTION_DEBUG.equals(action) &&
             GeckoThread.checkAndSetLaunchState(GeckoThread.LaunchState.Launching, GeckoThread.LaunchState.WaitForDebugger)) {
@@ -1558,6 +1564,9 @@ public abstract class GeckoApp
                 }
             }, 1000 * 5 /* 5 seconds */);
         }
+
+        Log.d(LOGTAG, "SNORP: wtf?");
+        //ThreadUtils.pause();
 
         // Check if launched from data reporting notification.
         if (ACTION_LAUNCH_SETTINGS.equals(action)) {
@@ -2651,6 +2660,7 @@ public abstract class GeckoApp
     }
 
     protected void geckoConnected() {
+        Log.d(LOGTAG, "SNORP: gecko connected!");
         mLayerView.geckoConnected();
         mLayerView.setOverScrollMode(View.OVER_SCROLL_NEVER);
     }

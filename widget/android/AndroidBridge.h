@@ -30,8 +30,8 @@
 #include "mozilla/TimeStamp.h"
 
 // Some debug #defines
-// #define DEBUG_ANDROID_EVENTS
-// #define DEBUG_ANDROID_WIDGET
+#define DEBUG_ANDROID_EVENTS
+#define DEBUG_ANDROID_WIDGET
 
 class nsWindow;
 class nsIDOMMozSmsMessage;

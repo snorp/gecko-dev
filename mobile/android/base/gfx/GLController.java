@@ -306,6 +306,7 @@ public class GLController {
                 if (mEGLSurfaceForCompositor == EGL10.EGL_NO_SURFACE) {
                     mEGLSurfaceForCompositor = null;
                 }
+                Log.d(LOGTAG, "SNORP: created egl surface for compositor: " + mEGLSurfaceForCompositor);
             } catch (Exception e) {
                 Log.e(LOGTAG, "eglCreateWindowSurface threw", e);
             }
@@ -321,6 +322,7 @@ public class GLController {
         AttemptPreallocateEGLSurfaceForCompositor();
         EGLSurface result = mEGLSurfaceForCompositor;
         mEGLSurfaceForCompositor = null;
+        Log.d(LOGTAG, "SNORP: compositor gets egl surface " + result);
         return result;
     }
 

@@ -31,7 +31,7 @@ public class GeckoApplication extends Application {
      */
     @Override
     public void onConfigurationChanged(Configuration config) {
-        Log.d(LOG_TAG, "onConfigurationChanged: " + config.locale +
+        Log.d(LOG_TAG, "SNORP: onConfigurationChanged: " + config.locale +
                        ", background: " + mInBackground);
 
         // Do nothing if we're in the background. It'll simply cause a loop
@@ -54,6 +54,7 @@ public class GeckoApplication extends Application {
     }
 
     public void onActivityPause(GeckoActivityStatus activity) {
+
         mInBackground = true;
 
         if ((activity.isFinishing() == false) &&
@@ -79,6 +80,7 @@ public class GeckoApplication extends Application {
     }
 
     public void onActivityResume(GeckoActivityStatus activity) {
+        Log.d(LOG_TAG, "SNORP: onActivityResume");
         if (mPausedGecko) {
             GeckoAppShell.sendEventToGecko(GeckoEvent.createAppForegroundingEvent());
             mPausedGecko = false;
@@ -94,6 +96,8 @@ public class GeckoApplication extends Application {
 
     @Override
     public void onCreate() {
+        Log.d(LOG_TAG, "SNORP: GeckoApplication onCreate");
+
         HardwareUtils.init(getApplicationContext());
         Clipboard.init(getApplicationContext());
         FilePicker.init(getApplicationContext());

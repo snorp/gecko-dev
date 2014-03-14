@@ -544,6 +544,11 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
 
     case AndroidGeckoEvent::PREFERENCES_GET:
     case AndroidGeckoEvent::PREFERENCES_OBSERVE: {
+        if (!mBrowserApp) {
+            printf_stderr("SNORP: no browser app\n");
+            break;
+        }
+
         const nsTArray<nsString> &prefNames = curEvent->PrefNames();
         size_t count = prefNames.Length();
         nsAutoArrayPtr<const char16_t*> prefNamePtrs(new const char16_t*[count]);

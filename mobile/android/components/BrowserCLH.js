@@ -92,8 +92,6 @@ BrowserCLH.prototype = {
       service = aCmdLine.handleFlag("service", false);
     } catch(e) { /* Optional */ }
 
-    dump("SNORP: service? " + service);
-
     try {
       let uri = resolveURIInternal(aCmdLine, openURL);
       if (!uri)
@@ -103,7 +101,7 @@ BrowserCLH.prototype = {
       Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
 
       let browserWin = Services.wm.getMostRecentWindow("navigator:browser");
-      if (browserWin) {
+      if (browserWin && !service) {
         if (!pinned) {
           dump("SNORP: opening uri in recent window");
           browserWin.browserDOMWindow.openURI(uri, null, Ci.nsIBrowserDOMWindow.OPEN_NEWTAB, Ci.nsIBrowserDOMWindow.OPEN_EXTERNAL);
@@ -124,8 +122,9 @@ BrowserCLH.prototype = {
 
         if (service) {
           dump("SNORP: opening service.xul");
-          browserWin = openWindow(null, "chrome://browser/content/service.xul", "_blank", flags, args);
+          openWindow(null, "chrome://browser/content/service.xul", "_blank", flags, args);
         } else {
+          dump("SNORP: opening browser.xul");
           browserWin = openWindow(null, "chrome://browser/content/browser.xul", "_blank", flags, args);
         }
       }
