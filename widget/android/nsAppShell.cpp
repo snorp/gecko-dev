@@ -356,8 +356,7 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
     }
 
     case AndroidGeckoEvent::THUMBNAIL: {
-        if (!mBrowserApp)
-            break;
+        MOZ_ASSERT(mBrowserApp, "no browser app");
 
         int32_t tabId = curEvent->MetaState();
         const nsTArray<nsIntPoint>& points = curEvent->Points();
@@ -383,6 +382,8 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
     }
 
     case AndroidGeckoEvent::TELEMETRY_UI_SESSION_STOP: {
+        MOZ_ASSERT(mBrowserApp, "no browser app");
+
         if (curEvent->Characters().Length() == 0)
             break;
 
@@ -400,6 +401,8 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
     }
 
     case AndroidGeckoEvent::TELEMETRY_UI_SESSION_START: {
+        MOZ_ASSERT(mBrowserApp, "no browser app");
+
         if (curEvent->Characters().Length() == 0)
             break;
 
@@ -416,6 +419,8 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
     }
 
     case AndroidGeckoEvent::TELEMETRY_UI_EVENT: {
+        MOZ_ASSERT(mBrowserApp, "no browser app");
+
         if (curEvent->Characters().Length() == 0)
             break;
 
@@ -544,10 +549,7 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
 
     case AndroidGeckoEvent::PREFERENCES_GET:
     case AndroidGeckoEvent::PREFERENCES_OBSERVE: {
-        if (!mBrowserApp) {
-            printf_stderr("SNORP: no browser app\n");
-            break;
-        }
+        MOZ_ASSERT(mBrowserApp, "no browser app");
 
         const nsTArray<nsString> &prefNames = curEvent->PrefNames();
         size_t count = prefNames.Length();
@@ -565,6 +567,7 @@ nsAppShell::ProcessNextNativeEvent(bool mayWait)
     }
 
     case AndroidGeckoEvent::PREFERENCES_REMOVE_OBSERVERS:
+        MOZ_ASSERT(mBrowserApp, "no browser app");
         mBrowserApp->RemovePreferenceObservers(curEvent->RequestId());
         break;
 

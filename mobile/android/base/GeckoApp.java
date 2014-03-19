@@ -1455,10 +1455,12 @@ public abstract class GeckoApp
             if (!mShouldRestore) {
                 // Show about:home if we aren't restoring previous session and
                 // there's no external URL.
+                Log.d(LOGTAG, "SNORP: loading about:home in new tab", new Exception());
                 Tabs.getInstance().loadUrl(AboutPages.HOME, Tabs.LOADURL_NEW_TAB);
             }
         } else {
             // If given an external URL, load it
+            Log.d(LOGTAG, "SNORP: loading startup url in new tab: " + url);
             int flags = Tabs.LOADURL_NEW_TAB | Tabs.LOADURL_USER_ENTERED | Tabs.LOADURL_EXTERNAL;
             Tabs.getInstance().loadUrl(url, flags);
         }

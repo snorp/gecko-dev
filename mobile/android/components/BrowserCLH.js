@@ -55,7 +55,10 @@ function resolveURIInternal(aCmdLine, aArgument) {
   return uri;
 }
 
-function BrowserCLH() {}
+function BrowserCLH() {
+  this.serviceWin = null;
+  this.browserWin = null;
+}
 
 BrowserCLH.prototype = {
   handle: function fs_handle(aCmdLine) {
@@ -93,18 +96,36 @@ BrowserCLH.prototype = {
     } catch(e) { /* Optional */ }
 
     try {
+      aCmdLine.preventDefault = true;
+
       let uri = resolveURIInternal(aCmdLine, openURL);
       if (!uri)
         return;
 
+      if (service) {
+        if (!this.serviceWin) {
+          let appShellService = Cc["@mozilla.org/appshell/appShellService;1"].getService(Ci["nsIAppShellService"]);
+
+          dump("SNORP: opening service.xul");
+
+          //this.serviceWin = appShellService.createWindowlessBrowser(true);
+          //this.serviceWin.loadURI("chrome://browser/content/service.xul", 0, null, null, null);
+          Services.startup.enterLastWindowClosingSurvivalArea();
+          this.serviceWin = appShellService.createWindowlessBrowser(true); //null, "chrome://browser/content/service.xul", 0, 16, 16);
+          this.serviceWin.loadURI("chrome://browser/content/service.xul", 0, null, null, null);
+        } else {
+          dump("SNORP: already running a service window");
+        }
+        return;
+      }
+
       // Let's get a head start on opening the network connection to the URI we are about to load
       Services.io.QueryInterface(Ci.nsISpeculativeConnect).speculativeConnect(uri, null);
 
-      let browserWin = Services.wm.getMostRecentWindow("navigator:browser");
-      if (browserWin && !service) {
+      if (this.browserWin) {
         if (!pinned) {
           dump("SNORP: opening uri in recent window");
-          browserWin.browserDOMWindow.openURI(uri, null, Ci.nsIBrowserDOMWindow.OPEN_NEWTAB, Ci.nsIBrowserDOMWindow.OPEN_EXTERNAL);
+          this.browserWin.browserDOMWindow.openURI(uri, null, Ci.nsIBrowserDOMWindow.OPEN_NEWTAB, Ci.nsIBrowserDOMWindow.OPEN_EXTERNAL);
         }
       } else {
         let args = {
@@ -120,16 +141,9 @@ BrowserCLH.prototype = {
         if (!pinned)
           flags += ",all";
 
-        if (service) {
-          dump("SNORP: opening service.xul");
-          openWindow(null, "chrome://browser/content/service.xul", "_blank", flags, args);
-        } else {
-          dump("SNORP: opening browser.xul");
-          browserWin = openWindow(null, "chrome://browser/content/browser.xul", "_blank", flags, args);
-        }
+        dump("SNORP: opening browser.xul");
+        this.browserWin = openWindow(null, "chrome://browser/content/browser.xul", "_blank", flags, args);
       }
-
-      aCmdLine.preventDefault = true;
     } catch (x) {
       dump("BrowserCLH.handle: " + x);
     }
