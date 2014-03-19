@@ -322,7 +322,7 @@ public class GeckoAppShell
             };
             Looper.myQueue().addIdleHandler(idleHandler);
 
-            // run gecko -- it will spawn its own thread
+            // Initiailize Gecko. Right now this just constructs the AndroidBridge
             GeckoAppShell.nativeInit();
         }
 

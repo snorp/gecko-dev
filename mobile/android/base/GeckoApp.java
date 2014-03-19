@@ -1523,18 +1523,6 @@ public abstract class GeckoApp
             GeckoAppShell.sendEventToGecko(GeckoEvent.createBroadcastEvent("Session:Restore", restoreMessage));
         }
 
-        // External URLs should always be loaded regardless of whether Gecko is
-        // already running.
-        if (isExternalURL) {
-            loadStartupTab(passedUri);
-        } else if (!mIsRestoringActivity) {
-            loadStartupTab(null);
-        }
-
-        // We now have tab stubs from the last session. Any future tabs should
-        // be animated.
-        Tabs.getInstance().notifyListeners(null, Tabs.TabEvents.RESTORED);
-
         // If we're not restoring, move the session file so it can be read for
         // the last tabs section.
         if (!mShouldRestore) {
@@ -1549,7 +1537,6 @@ public abstract class GeckoApp
             GeckoThread.setUri(passedUri);
         }
 
-        Log.d(LOGTAG, "SNORP: wtf");
         if (GeckoThread.checkLaunchState(GeckoThread.LaunchState.GeckoRunning)) {
             GeckoThread.runCommandLine();
         } else if (!ACTION_DEBUG.equals(action) &&
@@ -1567,8 +1554,17 @@ public abstract class GeckoApp
             }, 1000 * 5 /* 5 seconds */);
         }
 
-        Log.d(LOGTAG, "SNORP: wtf?");
-        //ThreadUtils.pause();
+        // External URLs should always be loaded regardless of whether Gecko is
+        // already running.
+        if (isExternalURL) {
+            loadStartupTab(passedUri);
+        } else if (!mIsRestoringActivity) {
+            loadStartupTab(null);
+        }
+
+        // We now have tab stubs from the last session. Any future tabs should
+        // be animated.
+        Tabs.getInstance().notifyListeners(null, Tabs.TabEvents.RESTORED);
 
         // Check if launched from data reporting notification.
         if (ACTION_LAUNCH_SETTINGS.equals(action)) {

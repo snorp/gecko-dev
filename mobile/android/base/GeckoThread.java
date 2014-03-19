@@ -95,6 +95,8 @@ public class GeckoThread extends Thread implements GeckoEventListener {
         if (!isCreated())
             return;
 
+        setLaunchState(GeckoThread.LaunchState.Launched);
+
         ThreadUtils.sGeckoHandler.post(new Runnable() {
             public void run() {
                 Log.d(LOGTAG, "SNORP: running existing gecko");
@@ -223,7 +225,6 @@ public class GeckoThread extends Thread implements GeckoEventListener {
     public void handleMessage(String event, JSONObject message) {
         if ("Gecko:Ready".equals(event)) {
             Log.d(LOGTAG, "SNORP: gecko ready!");
-            GeckoAppShell.getEventDispatcher().unregisterEventListener(event, this);
             setLaunchState(LaunchState.GeckoRunning);
             GeckoAppShell.sendPendingEventsToGecko();
         }
