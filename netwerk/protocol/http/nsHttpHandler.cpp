@@ -52,6 +52,10 @@
 #include "mozilla/net/NeckoChild.h"
 #include "mozilla/Telemetry.h"
 
+#if defined(MOZ_XZ)
+#include "HTTPXzConv.h"
+#endif
+
 #if defined(XP_UNIX)
 #include <sys/utsname.h>
 #endif
@@ -355,6 +359,11 @@ nsHttpHandler::Init()
     mWifiTickler = new Tickler();
     if (NS_FAILED(mWifiTickler->Init()))
         mWifiTickler = nullptr;
+
+#ifdef MOZ_XZ
+    // Register the pref observer for the XZ converter
+    nsCOMPtr<nsIObserver> unused = HTTPXzConv::InitPrefObserver();
+#endif
 
     nsCOMPtr<nsIParentalControlsService> pc = do_CreateInstance("@mozilla.org/parental-controls-service;1");
     if (pc) {

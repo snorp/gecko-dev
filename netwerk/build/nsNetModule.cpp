@@ -385,6 +385,9 @@ nsresult NS_NewFTPDirListingConv(nsFTPDirListingConv** result);
 #include "nsStreamConverterService.h"
 #include "nsMultiMixedConv.h"
 #include "nsHTTPCompressConv.h"
+#ifdef MOZ_XZ
+#include "HTTPXzConv.h"
+#endif
 #include "mozTXTToHTMLConv.h"
 #include "nsUnknownDecoder.h"
 #include "nsTXTToHTMLConv.h"
@@ -396,6 +399,13 @@ nsresult NS_NewFTPDirListingConv(nsFTPDirListingConv** result);
 nsresult NS_NewMultiMixedConv (nsMultiMixedConv** result);
 nsresult MOZ_NewTXTToHTMLConv (mozTXTToHTMLConv** result);
 nsresult NS_NewHTTPCompressConv  (nsHTTPCompressConv ** result);
+#ifdef MOZ_XZ
+namespace mozilla {
+namespace net {
+NS_GENERIC_FACTORY_CONSTRUCTOR(HTTPXzConv)
+}
+}
+#endif
 nsresult NS_NewNSTXTToHTMLConv(nsTXTToHTMLConv** result);
 nsresult NS_NewStreamConv(nsStreamConverterService **aStreamConv);
 
@@ -410,6 +420,7 @@ nsresult NS_NewStreamConv(nsStreamConverterService **aStreamConv);
 #define COMPRESS_TO_UNCOMPRESSED     "?from=compress&to=uncompressed"
 #define XCOMPRESS_TO_UNCOMPRESSED    "?from=x-compress&to=uncompressed"
 #define DEFLATE_TO_UNCOMPRESSED      "?from=deflate&to=uncompressed"
+#define XZ_TO_UNCOMPRESSED           "?from=xz&to=uncompressed"
 #define PLAIN_TO_HTML                "?from=text/plain&to=text/html"
 
 #ifdef BUILD_BINHEX_DECODER
@@ -428,6 +439,9 @@ static const mozilla::Module::CategoryEntry kNeckoCategories[] = {
     { NS_ISTREAMCONVERTER_KEY, COMPRESS_TO_UNCOMPRESSED, "" },
     { NS_ISTREAMCONVERTER_KEY, XCOMPRESS_TO_UNCOMPRESSED, "" },
     { NS_ISTREAMCONVERTER_KEY, DEFLATE_TO_UNCOMPRESSED, "" },
+#ifdef MOZ_XZ
+    { NS_ISTREAMCONVERTER_KEY, XZ_TO_UNCOMPRESSED, "" },
+#endif
 #ifdef BUILD_BINHEX_DECODER
     { NS_ISTREAMCONVERTER_KEY, BINHEX_TO_WILD, "" },
 #endif
@@ -738,6 +752,9 @@ NS_DEFINE_NAMED_CID(NS_MULTIMIXEDCONVERTER_CID);
 NS_DEFINE_NAMED_CID(NS_UNKNOWNDECODER_CID);
 NS_DEFINE_NAMED_CID(NS_BINARYDETECTOR_CID);
 NS_DEFINE_NAMED_CID(NS_HTTPCOMPRESSCONVERTER_CID);
+#ifdef MOZ_XZ
+NS_DEFINE_NAMED_CID(NS_HTTPXZCONVERTER_CID);
+#endif
 NS_DEFINE_NAMED_CID(NS_NSTXTTOHTMLCONVERTER_CID);
 #ifdef BUILD_BINHEX_DECODER
 NS_DEFINE_NAMED_CID(NS_BINHEXDECODER_CID);
@@ -879,6 +896,9 @@ static const mozilla::Module::CIDEntry kNeckoCIDs[] = {
     { &kNS_UNKNOWNDECODER_CID, false, nullptr, CreateNewUnknownDecoderFactory },
     { &kNS_BINARYDETECTOR_CID, false, nullptr, CreateNewBinaryDetectorFactory },
     { &kNS_HTTPCOMPRESSCONVERTER_CID, false, nullptr, CreateNewHTTPCompressConvFactory },
+#ifdef MOZ_XZ
+    { &kNS_HTTPXZCONVERTER_CID, false, nullptr, mozilla::net::HTTPXzConvConstructor },
+#endif
     { &kNS_NSTXTTOHTMLCONVERTER_CID, false, nullptr, CreateNewNSTXTToHTMLConvFactory },
 #ifdef BUILD_BINHEX_DECODER
     { &kNS_BINHEXDECODER_CID, false, nullptr, nsBinHexDecoderConstructor },
@@ -1029,6 +1049,9 @@ static const mozilla::Module::ContractIDEntry kNeckoContracts[] = {
     { NS_ISTREAMCONVERTER_KEY COMPRESS_TO_UNCOMPRESSED, &kNS_HTTPCOMPRESSCONVERTER_CID },
     { NS_ISTREAMCONVERTER_KEY XCOMPRESS_TO_UNCOMPRESSED, &kNS_HTTPCOMPRESSCONVERTER_CID },
     { NS_ISTREAMCONVERTER_KEY DEFLATE_TO_UNCOMPRESSED, &kNS_HTTPCOMPRESSCONVERTER_CID },
+#ifdef MOZ_XZ
+    { NS_ISTREAMCONVERTER_KEY XZ_TO_UNCOMPRESSED, &kNS_HTTPXZCONVERTER_CID },
+#endif
     { NS_ISTREAMCONVERTER_KEY PLAIN_TO_HTML, &kNS_NSTXTTOHTMLCONVERTER_CID },
 #ifdef BUILD_BINHEX_DECODER
     { NS_ISTREAMCONVERTER_KEY BINHEX_TO_WILD, &kNS_BINHEXDECODER_CID },

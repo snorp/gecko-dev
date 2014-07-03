@@ -1021,7 +1021,11 @@ pref("network.http.redirection-limit", 20);
 // Enable http compression: comment this out in case of problems with 1.1
 // NOTE: support for "compress" has been disabled per bug 196406.
 // NOTE: separate values with comma+space (", "): see bug 576033
+#ifdef MOZ_XZ
+pref("network.http.accept-encoding", "gzip, deflate, xz");
+#else
 pref("network.http.accept-encoding", "gzip, deflate");
+#endif
 
 pref("network.http.pipelining"      , false);
 pref("network.http.pipelining.ssl"  , false); // disable pipelining over SSL
@@ -1495,6 +1499,17 @@ pref("network.stricttransportsecurity.preloadlist", true);
 
 pref("converter.html2txt.structs",          true); // Output structured phrases (strong, em, code, sub, sup, b, i, u)
 pref("converter.html2txt.header_strategy",  1); // 0 = no indention; 1 = indention, increased with header level; 2 = numbering and slight indention
+
+#ifdef MOZ_XZ
+// To enable use of xz encoding.  Modifying this pref also triggers an
+// adjustment to network.http.accept-encoding to include/exclude xz in the
+// Accept-Encoding request header.
+pref("converter.xz.enabled", true);
+
+// Memory limit for each xz stream in MiB.
+// 32 MiB is enough for decompressing streams compressed with "xz -8"
+pref("converter.xz.memory_limit_mb", 32);
+#endif
 
 pref("intl.accept_languages",               "chrome://global/locale/intl.properties");
 pref("intl.menuitems.alwaysappendaccesskeys","chrome://global/locale/intl.properties");
