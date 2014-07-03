@@ -434,7 +434,9 @@ SpdyStream31::ParseHttpRequestHeaders(const char *buf,
     if (name.EqualsLiteral("connection") ||
         name.EqualsLiteral("keep-alive") ||
         name.EqualsLiteral("host") ||
+#ifndef MOZ_XZ
         name.EqualsLiteral("accept-encoding") ||
+#endif
         name.EqualsLiteral("te") ||
         name.EqualsLiteral("transfer-encoding"))
       continue;
