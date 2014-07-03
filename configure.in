@@ -957,6 +957,7 @@ MOZ_BZ2_CFLAGS=
 MOZ_BZ2_LIBS='$(call EXPAND_LIBNAME_PATH,bz2,$(DEPTH)/modules/libbz2/src)'
 MOZ_PNG_CFLAGS="-I$_objdir/dist/include" # needed for freetype compilation
 MOZ_PNG_LIBS='$(call EXPAND_LIBNAME_PATH,mozpng,$(DEPTH)/media/libpng)'
+MOZ_XZ_LIBS='$(call EXPAND_LIBNAME_PATH,mozxz,$(DEPTH)/modules/xz-embedded)'
 
 MOZ_JS_STATIC_LIBS='$(call EXPAND_LIBNAME_PATH,js_static,$(LIBXUL_DIST)/lib)'
 MOZ_JS_SHARED_LIBS='$(call EXPAND_LIBNAME_PATH,mozjs,$(LIBXUL_DIST)/lib)'
@@ -3685,6 +3686,19 @@ if test "$MOZ_LINKER" = 1 -a "$MOZ_NATIVE_ZLIB" != 1; then
 fi
 
 MOZ_PNG_ARM_NEON=
+
+dnl XZ Embedded support
+dnl ========================================================
+MOZ_XZ=1
+MOZ_ARG_DISABLE_BOOL(xz,
+[  --disable-xz
+                          Disable usage of XZ Embedded library],
+   MOZ_XZ=,
+   MOZ_XZ=1)
+
+if test "$MOZ_XZ" = 1; then
+    AC_DEFINE(MOZ_XZ)
+fi
 
 if test -z "$SKIP_LIBRARY_CHECKS"; then
 dnl system BZIP2 Support
@@ -8687,11 +8701,13 @@ AC_SUBST(SYSTEM_LIBXUL)
 AC_SUBST(MOZ_NATIVE_JPEG)
 AC_SUBST(MOZ_NATIVE_PNG)
 AC_SUBST(MOZ_NATIVE_BZ2)
+AC_SUBST(MOZ_XZ)
 
 AC_SUBST(MOZ_JPEG_CFLAGS)
 AC_SUBST(MOZ_JPEG_LIBS)
 AC_SUBST(MOZ_BZ2_CFLAGS)
 AC_SUBST(MOZ_BZ2_LIBS)
+AC_SUBST(MOZ_XZ_LIBS)
 AC_SUBST(MOZ_PNG_CFLAGS)
 AC_SUBST(MOZ_PNG_LIBS)
 

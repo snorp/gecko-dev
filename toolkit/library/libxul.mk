@@ -93,6 +93,10 @@ ifdef MOZ_DMD
 EXTRA_DSO_LDOPTS += $(call EXPAND_LIBNAME_PATH,dmd,$(DIST)/lib)
 endif
 
+ifdef MOZ_XZ
+EXTRA_DSO_LDOPTS += $(MOZ_XZ_LIBS)
+endif
+
 EXTRA_DSO_LDOPTS += $(call EXPAND_LIBNAME_PATH,gkmedias,$(DIST)/lib)
 
 ifdef MOZ_WEBRTC

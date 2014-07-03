@@ -26,6 +26,11 @@ if CONFIG['MOZ_WIDGET_TOOLKIT'] != 'cocoa':
         'nsBinHexDecoder.cpp',
     ]
 
+if CONFIG['MOZ_XZ']:
+    UNIFIED_SOURCES += [
+        'HTTPXzConv.cpp',
+    ]
+
 FAIL_ON_WARNINGS = True
 
 MSVC_ENABLE_PGO = True

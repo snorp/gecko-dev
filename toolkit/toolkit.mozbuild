@@ -43,6 +43,9 @@ if CONFIG['MOZ_AUTH_EXTENSION']:
 if CONFIG['MOZ_UPDATER']:
     add_tier_dir('platform', 'other-licenses/bsdiff')
 
+if CONFIG['MOZ_XZ']:
+    add_tier_dir('platform', 'modules/xz-embedded')
+
 # Gecko/Core components.
 
 add_tier_dir('platform', ['ipc', 'js/ipc'])
