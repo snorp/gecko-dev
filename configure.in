@@ -5198,8 +5198,18 @@ fi;
 dnl ========================================================
 dnl = Built-in fragmented MP4 support.
 dnl ========================================================
+
+if test "$OS_TARGET" = Android; then
+    dnl Testing FMP4 for Android using MediaCodec
+    MOZ_FMP4=1
+    MOZ_ANDROIDMC=1
+    AC_DEFINE(MOZ_ANDROIDMC)
+fi
+
 if test -n "$MOZ_WMF" -o -n "$MOZ_FFMPEG" -o -n "$MOZ_APPLEMEDIA"; then
-    dnl Enable fragmented MP4 parser on platforms with decoder support.
+    dnl Enable fragmented MP4 parser on Windows by default.
+    dnl We will also need to enable it on other platforms as we implement
+    dnl platform decoder support there too.
     MOZ_FMP4=1
 fi
 
@@ -8815,6 +8825,7 @@ AC_SUBST(MOZ_OPUS)
 AC_SUBST(MOZ_WEBM)
 AC_SUBST(MOZ_WMF)
 AC_SUBST(MOZ_FFMPEG)
+AC_SUBST(MOZ_ANDROIDMC)
 AC_SUBST(MOZ_FMP4)
 AC_SUBST(MOZ_EME)
 AC_SUBST(MOZ_DIRECTSHOW)

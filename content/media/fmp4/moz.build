@@ -67,6 +67,14 @@ if CONFIG['ANDROID_VERSION'] >= '18'and CONFIG['MOZ_WIDGET_TOOLKIT'] == 'gonk':
 
 include('/ipc/chromium/chromium-config.mozbuild')
 
+if CONFIG['MOZ_ANDROIDMC']:
+    EXPORTS += [
+        'androidmc/AndroidDecoderModule.h',
+    ]
+    UNIFIED_SOURCES += [
+        'androidmc/AndroidDecoderModule.cpp',
+    ]
+
 FINAL_LIBRARY = 'xul'
 
 FAIL_ON_WARNINGS = True
