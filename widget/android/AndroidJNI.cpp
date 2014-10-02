@@ -41,7 +41,7 @@
 #include "mozilla/layers/APZCTreeManager.h"
 #include "nsIMobileMessageDatabaseService.h"
 #include "nsPluginInstanceOwner.h"
-#include "nsSurfaceTexture.h"
+#include "AndroidSurfaceTexture.h"
 #include "GeckoProfiler.h"
 #include "nsMemoryPressure.h"
 
@@ -50,6 +50,7 @@ using namespace mozilla::dom;
 using namespace mozilla::dom::mobilemessage;
 using namespace mozilla::layers;
 using namespace mozilla::widget::android;
+using namespace mozilla::gl;
 
 /* Forward declare all the JNI methods as extern "C" */
 
@@ -869,9 +870,9 @@ Java_org_mozilla_gecko_GeckoAppShell_getNextMessageFromQueue(JNIEnv* jenv, jclas
 NS_EXPORT void JNICALL
 Java_org_mozilla_gecko_GeckoAppShell_onSurfaceTextureFrameAvailable(JNIEnv* jenv, jclass, jobject surfaceTexture, jint id)
 {
-  nsSurfaceTexture* st = nsSurfaceTexture::Find(id);
+  AndroidSurfaceTexture* st = AndroidSurfaceTexture::Find(id);
   if (!st) {
-    __android_log_print(ANDROID_LOG_ERROR, "GeckoJNI", "Failed to find nsSurfaceTexture with id %d", id);
+    __android_log_print(ANDROID_LOG_ERROR, "GeckoJNI", "Failed to find AndroidSurfaceTexture with id %d", id);
     return;
   }
 
